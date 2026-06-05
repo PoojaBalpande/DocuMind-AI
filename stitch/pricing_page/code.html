@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pricing | DocuMind AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #001736 0%, #0c2c55 100%);
+        }
+        .primary-gradient-hover:hover {
+            background: linear-gradient(135deg, #0c2c55 0%, #001736 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-secondary-container">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dcdcbe",
+                      "outline-variant": "#c4c6d0",
+                      "secondary": "#2c6577",
+                      "surface-bright": "#fbfbdc",
+                      "on-surface": "#1b1d0a",
+                      "on-primary-fixed-variant": "#2c4771",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#004e5b",
+                      "surface-container-high": "#eaeacb",
+                      "surface-tint": "#445f8b",
+                      "outline": "#74777f",
+                      "tertiary-container": "#003139",
+                      "inverse-surface": "#30321d",
+                      "surface-container-low": "#f6f6d6",
+                      "primary-fixed-dim": "#adc7f9",
+                      "on-tertiary": "#ffffff",
+                      "background": "#fbfbdc",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary": "#001b20",
+                      "on-surface-variant": "#43474f",
+                      "on-secondary-fixed": "#001f27",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#001b3d",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#5f9caa",
+                      "surface-variant": "#e4e4c6",
+                      "secondary-fixed": "#b3ebff",
+                      "on-secondary-container": "#336c7d",
+                      "on-primary-container": "#7a94c3",
+                      "primary-container": "#0c2c55",
+                      "tertiary-fixed": "#afecfc",
+                      "secondary-fixed-dim": "#97cfe2",
+                      "surface-container-highest": "#e4e4c6",
+                      "surface": "#fbfbdc",
+                      "on-background": "#1b1d0a",
+                      "error": "#ba1a1a",
+                      "surface-container": "#f0f0d1",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#93d0df",
+                      "primary-fixed": "#d6e3ff",
+                      "inverse-on-surface": "#f3f3d3",
+                      "secondary-container": "#b3ebff",
+                      "primary": "#001736",
+                      "on-tertiary-fixed": "#001f25",
+                      "on-secondary-fixed-variant": "#094d5e",
+                      "inverse-primary": "#adc7f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px",
+                      "xl": "32px",
+                      "xs": "4px",
+                      "gutter": "24px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "xxl": "48px"
+              },
+              "fontFamily": {
+                      "display": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center h-16 px-margin-desktop max-w-full mx-auto">
+<div class="text-headline-sm font-display font-bold text-primary">DocuMind AI</div>
+<div class="hidden md:flex gap-xl items-center">
+<a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-body-md text-body-md" href="#">Product</a>
+<a class="text-primary font-semibold border-b-2 border-primary transition-all duration-300 font-body-md text-body-md" href="#">Pricing</a>
+<a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-body-md text-body-md" href="#">Solutions</a>
+<a class="text-on-surface-variant hover:text-primary transition-all duration-300 font-body-md text-body-md" href="#">Resources</a>
+</div>
+<div class="flex items-center gap-md">
+<button class="px-md py-sm text-secondary font-semibold hover:bg-surface-variant/30 rounded-lg transition-all duration-300 active:scale-95">Log In</button>
+<button class="px-lg py-sm primary-gradient text-on-primary font-semibold rounded-xl transition-all duration-300 shadow-md active:scale-95">Get Started</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="pt-xxl pb-xl px-margin-desktop text-center max-w-4xl mx-auto mt-16">
+<span class="inline-block px-md py-unit bg-secondary-container text-on-secondary-container rounded-full text-label-lg font-semibold mb-md">
+            Simple Pricing
+        </span>
+<h1 class="font-display text-display text-primary mb-md">
+            Invest in clarity. <br/>
+            Precision scaled for you.
+        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+            From solo researchers to global enterprises, DocuMind AI adapts to your workflow. No hidden fees. Just powerful, cold-winter technology.
+        </p>
+</header>
+<!-- Pricing Cards Grid -->
+<main class="px-margin-desktop pb-xxl max-w-[1200px] mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- Starter Plan -->
+<div class="glass-card p-xl rounded-xxl flex flex-col hover:shadow-xl transition-all duration-500 border-outline-variant/30">
+<div class="mb-xl">
+<h3 class="font-display text-headline-md text-on-surface mb-xs">Starter</h3>
+<p class="text-body-sm text-on-surface-variant">For individual precision.</p>
+</div>
+<div class="mb-xl">
+<span class="font-display text-headline-lg text-primary">$0</span>
+<span class="text-body-md text-on-surface-variant">/mo</span>
+</div>
+<ul class="space-y-md mb-xxl flex-grow">
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">5 PDF uploads / month</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">Basic AI Chat</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">Single workspace</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined text-[20px]">block</span>
+<span class="text-body-md line-through">Batch processing</span>
+</li>
+</ul>
+<button class="w-full py-md border border-secondary text-secondary font-bold rounded-xl hover:bg-secondary/5 transition-all active:scale-[0.98]">
+                    Start Free
+                </button>
+</div>
+<!-- Pro/Precision Plan -->
+<div class="relative glass-card p-xl rounded-xxl flex flex-col shadow-2xl transition-all duration-500 border-2 border-secondary ring-4 ring-secondary/5">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-secondary text-on-secondary px-lg py-unit rounded-full text-label-lg font-bold">
+                    Most Popular
+                </div>
+<div class="mb-xl">
+<h3 class="font-display text-headline-md text-primary mb-xs">Precision</h3>
+<p class="text-body-sm text-on-surface-variant">Unleash full AI potential.</p>
+</div>
+<div class="mb-xl">
+<span class="font-display text-headline-lg text-primary">$29</span>
+<span class="text-body-md text-on-surface-variant">/mo</span>
+</div>
+<ul class="space-y-md mb-xxl flex-grow">
+<li class="flex items-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Unlimited uploads</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Advanced LLM models</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Collaborative Folders</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-body-md font-medium">Source Citations API</span>
+</li>
+</ul>
+<button class="w-full py-md primary-gradient text-on-primary font-bold rounded-xl primary-gradient-hover transition-all shadow-lg active:scale-[0.98]">
+                    Upgrade to Pro
+                </button>
+</div>
+<!-- Enterprise Plan -->
+<div class="glass-card p-xl rounded-xxl flex flex-col hover:shadow-xl transition-all duration-500 border-outline-variant/30">
+<div class="mb-xl">
+<h3 class="font-display text-headline-md text-on-surface mb-xs">Enterprise</h3>
+<p class="text-body-sm text-on-surface-variant">Global scale security.</p>
+</div>
+<div class="mb-xl">
+<span class="font-display text-headline-lg text-primary">Custom</span>
+</div>
+<ul class="space-y-md mb-xxl flex-grow">
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">Self-hosted option</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">SSO &amp; SAML Login</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">Dedicated account lead</span>
+</li>
+<li class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="text-body-md">SLA Guarantees</span>
+</li>
+</ul>
+<button class="w-full py-md border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary/5 transition-all active:scale-[0.98]">
+                    Contact Sales
+                </button>
+</div>
+</div>
+</main>
+<!-- Comparison Table -->
+<section class="bg-surface-container/50 py-xxl px-margin-desktop">
+<div class="max-w-[1000px] mx-auto">
+<h2 class="font-display text-headline-lg text-primary text-center mb-xl">Compare all features</h2>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30">
+<th class="text-left py-lg px-md font-display text-label-lg text-on-surface-variant">Capabilities</th>
+<th class="text-center py-lg px-md font-display text-label-lg text-primary">Starter</th>
+<th class="text-center py-lg px-md font-display text-label-lg text-secondary">Precision</th>
+<th class="text-center py-lg px-md font-display text-label-lg text-primary">Enterprise</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr>
+<td class="py-md px-md font-body-md text-on-surface">Max File Size</td>
+<td class="py-md px-md text-center text-body-sm text-on-surface-variant">10 MB</td>
+<td class="py-md px-md text-center text-body-sm font-semibold text-secondary">500 MB</td>
+<td class="py-md px-md text-center text-body-sm text-on-surface-variant">Unlimited</td>
+</tr>
+<tr>
+<td class="py-md px-md font-body-md text-on-surface">AI Model Access</td>
+<td class="py-md px-md text-center text-body-sm text-on-surface-variant">Basic</td>
+<td class="py-md px-md text-center text-body-sm font-semibold text-secondary">GPT-4 / Claude 3</td>
+<td class="py-md px-md text-center text-body-sm text-on-surface-variant">Custom/Fine-tuned</td>
+</tr>
+<tr>
+<td class="py-md px-md font-body-md text-on-surface">Collaboration</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-outline-variant">remove</span>
+</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+</tr>
+<tr>
+<td class="py-md px-md font-body-md text-on-surface">Data Sovereignty</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-outline-variant">remove</span>
+</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-outline-variant">remove</span>
+</td>
+<td class="py-md px-md text-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-xxl px-margin-desktop max-w-[800px] mx-auto">
+<h2 class="font-display text-headline-lg text-primary text-center mb-xxl">Frequently Asked Questions</h2>
+<div class="space-y-md">
+<details class="group bg-surface-container-low rounded-xl p-md transition-all duration-300 open:bg-surface-container-high cursor-pointer">
+<summary class="flex justify-between items-center font-headline-sm text-primary list-none">
+                    Can I switch plans later?
+                    <span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-md text-body-md text-on-surface-variant leading-relaxed">
+                    Absolutely. You can upgrade or downgrade your plan at any time from your account settings. If you upgrade, the new features will be available immediately and your next billing cycle will reflect the pro-rated difference.
+                </div>
+</details>
+<details class="group bg-surface-container-low rounded-xl p-md transition-all duration-300 open:bg-surface-container-high cursor-pointer">
+<summary class="flex justify-between items-center font-headline-sm text-primary list-none">
+                    What document types are supported?
+                    <span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-md text-body-md text-on-surface-variant leading-relaxed">
+                    We currently support PDF, DOCX, TXT, and Markdown files. Our Enterprise plan also supports proprietary knowledge base integrations via API and direct database connectors.
+                </div>
+</details>
+<details class="group bg-surface-container-low rounded-xl p-md transition-all duration-300 open:bg-surface-container-high cursor-pointer">
+<summary class="flex justify-between items-center font-headline-sm text-primary list-none">
+                    How secure is my data?
+                    <span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="mt-md text-body-md text-on-surface-variant leading-relaxed">
+                    Security is our core pillar. All documents are encrypted at rest with AES-256 and in transit via TLS. We do not use your private data to train our global models unless explicitly permitted in our Enterprise agreements.
+                </div>
+</details>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full py-xxl bg-surface-dim border-t border-outline-variant/30">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop gap-lg max-w-full mx-auto">
+<div class="flex flex-col gap-sm items-center md:items-start">
+<span class="font-display text-label-lg font-black text-primary">DocuMind AI</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 DocuMind AI. Built for Cold Winter Technology environments.</p>
+</div>
+<div class="flex gap-xl">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Security</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Contact</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interaction: Subtle hover parallax for pricing cards
+        const cards = document.querySelectorAll('.glass-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

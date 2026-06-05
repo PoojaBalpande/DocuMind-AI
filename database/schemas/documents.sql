@@ -1,0 +1,22 @@
+-- DocuMind AI — Documents Table
+
+-- CREATE TABLE documents (
+--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+--     title VARCHAR(500) NOT NULL,
+--     file_name VARCHAR(500) NOT NULL,
+--     file_type VARCHAR(20) NOT NULL CHECK (file_type IN ('pdf', 'docx', 'txt', 'md')),
+--     file_size_bytes BIGINT NOT NULL,
+--     file_url TEXT,
+--     status VARCHAR(20) DEFAULT 'processing' CHECK (status IN ('processing', 'ready', 'error', 'archived')),
+--     page_count INTEGER,
+--     chunk_count INTEGER DEFAULT 0,
+--     tags TEXT[],
+--     metadata JSONB DEFAULT '{}',
+--     created_at TIMESTAMPTZ DEFAULT NOW(),
+--     updated_at TIMESTAMPTZ DEFAULT NOW()
+-- );
+
+-- CREATE INDEX idx_documents_user_id ON documents(user_id);
+-- CREATE INDEX idx_documents_status ON documents(status);
+-- CREATE INDEX idx_documents_created_at ON documents(created_at DESC);

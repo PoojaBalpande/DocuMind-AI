@@ -1,0 +1,60 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DocuMind AI — Docker Compose
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Usage: docker-compose up --build
+# This file is a placeholder for future containerized deployment.
+
+version: "3.9"
+
+services:
+  # ── Frontend (Next.js) ──────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - documind-network
+
+  # ── Backend (FastAPI) ───────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://documind:password@db:5432/documind_ai
+      - SECRET_KEY=${SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - documind-network
+
+  # ── Database (PostgreSQL + pgvector) ─
+  db:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=documind
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=documind_ai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schemas:/docker-entrypoint-initdb.d
+    networks:
+      - documind-network
+
+volumes:
+  pgdata:
+
+networks:
+  documind-network:
+    driver: bridge

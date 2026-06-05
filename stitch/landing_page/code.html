@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DocuMind AI - Transform Your Knowledge Base</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dcdcbe",
+                      "outline-variant": "#c4c6d0",
+                      "secondary": "#2c6577",
+                      "surface-bright": "#fbfbdc",
+                      "on-surface": "#1b1d0a",
+                      "on-primary-fixed-variant": "#2c4771",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#004e5b",
+                      "surface-container-high": "#eaeacb",
+                      "surface-tint": "#445f8b",
+                      "outline": "#74777f",
+                      "tertiary-container": "#003139",
+                      "inverse-surface": "#30321d",
+                      "surface-container-low": "#f6f6d6",
+                      "primary-fixed-dim": "#adc7f9",
+                      "on-tertiary": "#ffffff",
+                      "background": "#fbfbdc",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary": "#001b20",
+                      "on-surface-variant": "#43474f",
+                      "on-secondary-fixed": "#001f27",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#001b3d",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#5f9caa",
+                      "surface-variant": "#e4e4c6",
+                      "secondary-fixed": "#b3ebff",
+                      "on-secondary-container": "#336c7d",
+                      "on-primary-container": "#7a94c3",
+                      "primary-container": "#0c2c55",
+                      "tertiary-fixed": "#afecfc",
+                      "secondary-fixed-dim": "#97cfe2",
+                      "surface-container-highest": "#e4e4c6",
+                      "surface": "#fbfbdc",
+                      "on-background": "#1b1d0a",
+                      "error": "#ba1a1a",
+                      "surface-container": "#f0f0d1",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#93d0df",
+                      "primary-fixed": "#d6e3ff",
+                      "inverse-on-surface": "#f3f3d3",
+                      "secondary-container": "#b3ebff",
+                      "primary": "#001736",
+                      "on-tertiary-fixed": "#001f25",
+                      "on-secondary-fixed-variant": "#094d5e",
+                      "inverse-primary": "#adc7f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px",
+                      "xl": "32px",
+                      "xs": "4px",
+                      "gutter": "24px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "xxl": "48px"
+              },
+              "fontFamily": {
+                      "display": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(251, 251, 220, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(196, 198, 208, 0.2);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(44, 101, 119, 0.05), transparent 40%),
+                        radial-gradient(circle at bottom left, rgba(12, 44, 85, 0.03), transparent 40%);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #001736 0%, #0c2c55 100%);
+        }
+        .inner-glow {
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface selection:bg-secondary/20">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm flex justify-between items-center h-16 px-margin-desktop max-w-full mx-auto">
+<div class="flex items-center gap-xl">
+<span class="text-headline-sm font-display font-bold text-primary">DocuMind AI</span>
+<div class="hidden md:flex gap-lg">
+<a class="text-primary font-semibold border-b-2 border-primary font-display text-body-md transition-all duration-300" href="#">Product</a>
+<a class="text-on-surface-variant hover:text-primary font-display text-body-md transition-all duration-300" href="#">Pricing</a>
+<a class="text-on-surface-variant hover:text-primary font-display text-body-md transition-all duration-300" href="#">Solutions</a>
+<a class="text-on-surface-variant hover:text-primary font-display text-body-md transition-all duration-300" href="#">Resources</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="hidden sm:block text-on-surface-variant font-display text-body-md hover:bg-surface-container/50 px-md py-sm rounded-lg transition-all active:scale-95">Log In</button>
+<button class="primary-gradient text-on-primary font-display text-body-md px-lg py-sm rounded-xl inner-glow shadow-lg hover:shadow-xl transition-all active:scale-95">Get Started</button>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex items-center justify-center overflow-hidden hero-gradient px-margin-mobile md:px-margin-desktop">
+<div class="max-w-[900px] text-center z-10">
+<div class="inline-flex items-center gap-sm bg-surface-container px-md py-xs rounded-full border border-outline-variant/30 mb-xl animate-fade-in">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-lg text-secondary">V2.0 Intelligence Now Live</span>
+</div>
+<h1 class="font-display text-display md:text-[64px] md:leading-[72px] text-primary mb-lg">
+                    Upload PDFs and Chat With Your <span class="text-secondary">Knowledge Base</span>
+</h1>
+<p class="font-body-lg text-on-surface-variant mb-xxl max-w-[700px] mx-auto">
+                    Transform documents into an intelligent AI-powered knowledge assistant. Seamlessly extract insights, cite sources, and collaborate across enterprise data.
+                </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-md">
+<button class="primary-gradient text-on-primary font-display text-body-md px-[40px] py-md rounded-xl inner-glow shadow-lg hover:scale-105 transition-transform">Start Chatting Now</button>
+<button class="bg-surface-container-high text-primary font-display text-body-md px-[40px] py-md rounded-xl border border-outline-variant/50 hover:bg-surface-variant/50 transition-all">Watch Demo</button>
+</div>
+</div>
+<!-- Decorative Elements -->
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-secondary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]"></div>
+</section>
+<!-- Trusted By Section -->
+<section class="py-xxl bg-surface-container-low/50">
+<div class="px-margin-desktop text-center">
+<p class="font-label-lg text-on-surface-variant uppercase tracking-widest mb-xl">Trusted by high-stakes enterprise teams</p>
+<div class="flex flex-wrap justify-center items-center gap-xxl opacity-60 grayscale hover:grayscale-0 transition-all duration-700">
+<div class="h-8 w-32 bg-on-surface/20 rounded-md"></div>
+<div class="h-8 w-24 bg-on-surface/20 rounded-md"></div>
+<div class="h-8 w-40 bg-on-surface/20 rounded-md"></div>
+<div class="h-8 w-28 bg-on-surface/20 rounded-md"></div>
+<div class="h-8 w-36 bg-on-surface/20 rounded-md"></div>
+</div>
+</div>
+</section>
+<!-- Product Preview (Chat Mockup) -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop bg-surface">
+<div class="max-w-[1100px] mx-auto">
+<div class="glass-panel rounded-[24px] shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col md:flex-row h-[600px]">
+<!-- Mini Sidebar -->
+<div class="hidden md:flex w-[240px] bg-surface-container-low/80 p-md flex-col gap-md border-r border-outline-variant/20">
+<div class="flex items-center gap-sm p-sm bg-secondary/10 rounded-lg text-secondary font-semibold">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-label-lg">Q1 Research Deep-Dive</span>
+</div>
+<div class="flex items-center gap-sm p-sm text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-colors cursor-pointer">
+<span class="material-symbols-outlined">folder</span>
+<span class="font-label-lg">Legal Audit 2024</span>
+</div>
+<div class="mt-auto">
+<div class="bg-primary-container p-md rounded-xl text-on-primary-container">
+<p class="text-label-md font-bold mb-xs">Storage Used</p>
+<div class="w-full bg-surface-dim/30 h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[65%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat Area -->
+<div class="flex-1 flex flex-col bg-white/40">
+<div class="p-lg border-b border-outline-variant/10 flex justify-between items-center">
+<h3 class="font-headline-sm text-primary">Intelligence Console</h3>
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">settings</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">share</span>
+</div>
+</div>
+<div class="flex-1 p-lg overflow-y-auto space-y-lg">
+<div class="flex flex-col gap-xs max-w-[80%]">
+<div class="bg-surface-container p-md rounded-2xl rounded-tl-none font-body-md text-on-surface">
+                                    Analyze the fiscal impact mentioned on page 14 of the Q3 Annual Report.
+                                </div>
+<span class="text-label-md text-on-surface-variant px-sm">User • 10:24 AM</span>
+</div>
+<div class="flex flex-col gap-xs max-w-[90%] ml-auto items-end">
+<div class="bg-white border-l-4 border-secondary p-md rounded-2xl rounded-tr-none shadow-sm font-body-md text-on-surface">
+                                    Based on the Q3 report (p.14), the fiscal impact is estimated at $4.2M due to operational shifts. This aligns with the "Efficiency Goal" stated in your internal handbook.
+                                    <div class="mt-md flex flex-wrap gap-xs">
+<div class="bg-surface-container-low px-sm py-1 rounded-full border border-outline-variant/30 flex items-center gap-xs cursor-pointer hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+<span class="text-[11px] font-semibold">Q3_Report.pdf (p.14)</span>
+</div>
+</div>
+</div>
+<span class="text-label-md text-secondary px-sm">DocuMind AI • Just now</span>
+</div>
+</div>
+<div class="p-lg border-t border-outline-variant/10">
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-full py-md px-xl focus:ring-2 focus:ring-secondary/20 focus:outline-none transition-all pr-[120px]" placeholder="Ask anything about your documents..." type="text"/>
+<div class="absolute right-2 top-2 flex items-center gap-xs">
+<button class="p-sm text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined">attach_file</span></button>
+<button class="primary-gradient p-sm rounded-full text-on-primary"><span class="material-symbols-outlined">send</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features (Bento Grid) -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+<div class="max-w-[1200px] mx-auto">
+<div class="text-center mb-xxl">
+<h2 class="font-display text-headline-lg text-primary mb-md">Built for Precision</h2>
+<p class="font-body-md text-on-surface-variant max-w-[600px] mx-auto">Everything you need to manage complex knowledge at scale without the noise.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-lg">
+<!-- Feature 1 -->
+<div class="md:col-span-8 glass-panel p-xxl rounded-[32px] group overflow-hidden relative min-h-[320px]">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-secondary text-[40px] mb-lg">manage_search</span>
+<h3 class="font-headline-md text-primary mb-md">Context-Aware AI Search</h3>
+<p class="font-body-md text-on-surface-variant max-w-[400px]">DocuMind doesn't just look for keywords. It understands the intent and relationships across thousands of pages instantly.</p>
+</div>
+<div class="absolute bottom-0 right-0 w-[40%] translate-y-12 translate-x-4 opacity-50 group-hover:scale-110 transition-transform duration-700">
+<img alt="Clean code background" class="rounded-tl-2xl shadow-2xl" data-alt="A macro photograph of clean, elegant source code displayed on a high-resolution screen with a soft bokeh effect. The lighting is cool-toned with subtle blue and teal accents, creating a calm and professional atmosphere. The image feels technologically advanced and organized, mirroring a high-end enterprise software environment with a premium glassmorphic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnbEduZXInB8W8qwouS9xbzEBClGBI6snhm5RZenDKdBETVH55l5z9PGkN0Awf3tNJw_0KVE_5h8-c6Ds0FMcO3uAEwNLfRzyqyT7-uYi34RovwWRx_hnH4JiDrxjnhtJSkkAST5M8-Z7ui_CQnIFvmjm0JUTgfNiinfY6Oh8li_n8lmnJNFWdczf6rakp9N7nkoHWkunwMlmqJNDATRxgvD3mKPR6M3OUMpfTCkAfjpCCYS1y3_PNZ8IKhh0RRLGUea_YqqY-Z4Cu"/>
+</div>
+</div>
+<!-- Feature 2 -->
+<div class="md:col-span-4 bg-primary-container p-xxl rounded-[32px] text-on-primary-container relative overflow-hidden">
+<span class="material-symbols-outlined text-secondary-fixed text-[40px] mb-lg">verified_user</span>
+<h3 class="font-headline-md text-white mb-md">Enterprise Security</h3>
+<p class="font-body-sm opacity-80">SOC2 Type II compliant with end-to-end encryption. Your data stays in your environment, never used for training.</p>
+</div>
+<!-- Feature 3 -->
+<div class="md:col-span-4 bg-surface-dim p-xxl rounded-[32px]">
+<span class="material-symbols-outlined text-secondary text-[40px] mb-lg">fact_check</span>
+<h3 class="font-headline-sm text-primary mb-md">Exact Citations</h3>
+<p class="font-body-sm text-on-surface-variant">Every claim is backed by a clickable source card. Zero hallucinations, just verified data extraction.</p>
+</div>
+<!-- Feature 4 -->
+<div class="md:col-span-8 glass-panel p-xxl rounded-[32px] flex flex-col md:flex-row items-center gap-xl">
+<div class="flex-1">
+<span class="material-symbols-outlined text-secondary text-[40px] mb-lg">group_work</span>
+<h3 class="font-headline-md text-primary mb-md">Collaborative Workspaces</h3>
+<p class="font-body-md text-on-surface-variant">Share chat threads and document collections with your entire team. Built-in permissioning for secure access.</p>
+</div>
+<div class="w-full md:w-1/3 flex justify-center">
+<div class="flex -space-x-4">
+<div class="w-12 h-12 rounded-full border-4 border-surface bg-surface-dim"></div>
+<div class="w-12 h-12 rounded-full border-4 border-surface bg-secondary"></div>
+<div class="w-12 h-12 rounded-full border-4 border-surface bg-primary-container"></div>
+<div class="w-12 h-12 rounded-full border-4 border-surface bg-surface-container-high flex items-center justify-center text-label-md font-bold">+12</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop bg-surface">
+<div class="max-w-[1000px] mx-auto text-center">
+<h2 class="font-display text-headline-lg text-primary mb-xxl">Three Steps to Intelligence</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-xxl relative">
+<!-- Line connector for desktop -->
+<div class="hidden md:block absolute top-[40px] left-[15%] right-[15%] h-0.5 border-t-2 border-dashed border-outline-variant/30 z-0"></div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-20 h-20 rounded-full primary-gradient text-on-primary flex items-center justify-center font-display text-headline-md mb-lg shadow-xl">1</div>
+<h4 class="font-headline-sm text-primary mb-sm">Sync Documents</h4>
+<p class="font-body-sm text-on-surface-variant">Upload PDFs, connect Notion, or sync Google Drive in seconds.</p>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-20 h-20 rounded-full bg-white border-2 border-secondary text-secondary flex items-center justify-center font-display text-headline-md mb-lg shadow-lg">2</div>
+<h4 class="font-headline-sm text-primary mb-sm">AI Processing</h4>
+<p class="font-body-sm text-on-surface-variant">Our engine indexes your knowledge base with neural embeddings.</p>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-20 h-20 rounded-full bg-white border-2 border-secondary text-secondary flex items-center justify-center font-display text-headline-md mb-lg shadow-lg">3</div>
+<h4 class="font-headline-sm text-primary mb-sm">Ask &amp; Extract</h4>
+<p class="font-body-sm text-on-surface-variant">Start chatting. Get instant answers with cited sources and logic.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-xxl bg-surface-container-low">
+<div class="px-margin-desktop max-w-[1200px] mx-auto">
+<div class="flex flex-col md:flex-row gap-xl items-center">
+<div class="md:w-1/3">
+<h2 class="font-display text-headline-lg text-primary mb-md">Trusted by Experts</h2>
+<p class="font-body-md text-on-surface-variant">Join 2,000+ organizations leveraging DocuMind to outpace the competition.</p>
+</div>
+<div class="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="bg-white p-xl rounded-2xl shadow-sm border border-outline-variant/20">
+<p class="font-body-md text-primary mb-lg italic">"DocuMind has reduced our research time by over 70%. The citation feature is a game-changer for our legal compliance team."</p>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-dim"></div>
+<div>
+<p class="text-label-lg text-primary">Sarah Chen</p>
+<p class="text-label-md text-on-surface-variant">Head of R&amp;D, TechNova</p>
+</div>
+</div>
+</div>
+<div class="bg-white p-xl rounded-2xl shadow-sm border border-outline-variant/20">
+<p class="font-body-md text-primary mb-lg italic">"The glassmorphic UI is as beautiful as the engine is powerful. It finally makes interacting with thousands of PDFs feel effortless."</p>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-dim"></div>
+<div>
+<p class="text-label-lg text-primary">Marcus Thorne</p>
+<p class="text-label-md text-on-surface-variant">Principal Architect, Cold Winter Co.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop bg-surface">
+<div class="max-w-[1100px] mx-auto">
+<div class="text-center mb-xxl">
+<h2 class="font-display text-headline-lg text-primary mb-md">Simple, Scalable Plans</h2>
+<p class="font-body-md text-on-surface-variant">Start free, upgrade as your knowledge base grows.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg items-end">
+<!-- Basic -->
+<div class="bg-surface-container-lowest p-xl rounded-[24px] border border-outline-variant/20 flex flex-col h-fit">
+<h3 class="font-headline-sm text-primary mb-sm">Starter</h3>
+<p class="text-display text-primary mb-lg">$0<span class="text-body-md font-normal text-on-surface-variant">/mo</span></p>
+<ul class="space-y-md mb-xxl flex-1">
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> 10 Documents / Month</li>
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Basic AI Search</li>
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Mobile Web Access</li>
+</ul>
+<button class="w-full py-md rounded-xl border border-secondary text-secondary font-display font-semibold hover:bg-secondary/5 transition-colors">Start for Free</button>
+</div>
+<!-- Pro -->
+<div class="primary-gradient p-[1px] rounded-[24px] shadow-2xl scale-105 z-10">
+<div class="bg-white p-xl rounded-[23px] flex flex-col">
+<div class="bg-secondary/10 text-secondary text-label-md font-bold py-1 px-3 rounded-full self-start mb-md">MOST POPULAR</div>
+<h3 class="font-headline-sm text-primary mb-sm">Precision Plan</h3>
+<p class="text-display text-primary mb-lg">$29<span class="text-body-md font-normal text-on-surface-variant">/mo</span></p>
+<ul class="space-y-md mb-xxl">
+<li class="flex items-center gap-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Unlimited Documents</li>
+<li class="flex items-center gap-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Advanced Reasoning Engine</li>
+<li class="flex items-center gap-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Priority Citations</li>
+<li class="flex items-center gap-sm text-body-sm font-semibold"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> API Access (V1)</li>
+</ul>
+<button class="w-full primary-gradient text-on-primary py-md rounded-xl font-display font-semibold shadow-lg hover:shadow-xl transition-all">Go Pro Now</button>
+</div>
+</div>
+<!-- Enterprise -->
+<div class="bg-surface-container-lowest p-xl rounded-[24px] border border-outline-variant/20 flex flex-col h-fit">
+<h3 class="font-headline-sm text-primary mb-sm">Enterprise</h3>
+<p class="text-display text-primary mb-lg">Custom</p>
+<ul class="space-y-md mb-xxl flex-1">
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Single Sign-On (SSO)</li>
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Private Cloud Deployment</li>
+<li class="flex items-center gap-sm text-body-sm"><span class="material-symbols-outlined text-secondary text-sm">check_circle</span> Dedicated Success Manager</li>
+</ul>
+<button class="w-full py-md rounded-xl border border-outline-variant text-on-surface-variant font-display font-semibold hover:bg-surface-dim transition-colors">Contact Sales</button>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+<div class="max-w-[800px] mx-auto">
+<h2 class="font-display text-headline-lg text-primary text-center mb-xxl">Common Inquiries</h2>
+<div class="space-y-md">
+<div class="glass-panel p-lg rounded-2xl cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-headline-sm text-primary">Is my data secure and private?</h4>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:rotate-180 transition-transform">expand_more</span>
+</div>
+<div class="mt-md font-body-sm text-on-surface-variant hidden group-hover:block transition-all">
+                            Absolutely. We employ enterprise-grade AES-256 encryption and are SOC2 compliant. Your data is never used to train global AI models.
+                        </div>
+</div>
+<div class="glass-panel p-lg rounded-2xl cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="font-headline-sm text-primary">Which file formats do you support?</h4>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:rotate-180 transition-transform">expand_more</span>
+</div>
+<div class="mt-md font-body-sm text-on-surface-variant hidden group-hover:block transition-all">
+                            We currently support PDF, DOCX, TXT, and Markdown. We are rolling out Notion and Google Drive integrations this quarter.
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-xxl px-margin-mobile md:px-margin-desktop">
+<div class="max-w-[1200px] mx-auto primary-gradient rounded-[40px] p-xxl text-center relative overflow-hidden">
+<div class="relative z-10">
+<h2 class="font-display text-display text-on-primary mb-lg">Ready to talk to your documents?</h2>
+<p class="font-body-lg text-primary-fixed mb-xxl opacity-80">Join the thousands of teams making smarter decisions with DocuMind AI.</p>
+<button class="bg-white text-primary px-xxl py-md rounded-xl font-display font-bold shadow-2xl hover:scale-105 transition-transform">Get Started for Free</button>
+</div>
+<!-- Background visual -->
+<div class="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+<img alt="Abstract fluid shapes" class="w-full h-full object-cover" data-alt="Intricate, flowing abstract shapes in a high-contrast palette of deep navy and bright white. The composition uses organic curves and sharp lines to suggest fluid motion and digital energy. The lighting is dramatic, with high-key whites contrasting against deep, rich blues, creating a sense of sophisticated, premium depth that aligns with a high-end enterprise AI brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVBugkknoA2s_-BrPIU1iJApOWPTCnTybfJ7S3soi19BD7JWNa2oSokZdh2w7vl-3FntEa7d95jP0zEwjEdunJiDuuHNnXtxeIRqg0Q33EAiAAVUNtWZnkj7lp2qYMVApO8p0fIVRCMnQvYnkhZpw9RZJHkvYAD3x181AFu6JVulIASy9_R9I6k-iBTOVJaxpdL4R-iXyREzQY3GH99L5y23Vfm0M_Znv7JFIzfY2UN7ackUYh_8vnE7-VRk61yu-_aqlhyUB6lefk"/>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-xxl bg-surface-dim border-t border-outline-variant/30 px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-lg">
+<div class="flex flex-col items-center md:items-start gap-md">
+<span class="font-display text-label-lg font-black text-primary">DocuMind AI</span>
+<p class="font-body-sm text-on-surface-variant max-w-[300px] text-center md:text-left">© 2024 DocuMind AI. Built for Cold Winter Technology environments.</p>
+</div>
+<div class="flex gap-lg">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm" href="#">Security</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm" href="#">Contact</a>
+</div>
+</footer>
+<script>
+        // Simple micro-interactions
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Sticky Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 20) {
+                nav.classList.add('shadow-md');
+                nav.style.background = 'rgba(251, 251, 220, 0.95)';
+            } else {
+                nav.classList.remove('shadow-md');
+                nav.style.background = 'rgba(251, 251, 220, 0.8)';
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up | DocuMind AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dcdcbe",
+                      "outline-variant": "#c4c6d0",
+                      "secondary": "#2c6577",
+                      "surface-bright": "#fbfbdc",
+                      "on-surface": "#1b1d0a",
+                      "on-primary-fixed-variant": "#2c4771",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#004e5b",
+                      "surface-container-high": "#eaeacb",
+                      "surface-tint": "#445f8b",
+                      "outline": "#74777f",
+                      "tertiary-container": "#003139",
+                      "inverse-surface": "#30321d",
+                      "surface-container-low": "#f6f6d6",
+                      "primary-fixed-dim": "#adc7f9",
+                      "on-tertiary": "#ffffff",
+                      "background": "#fbfbdc",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary": "#001b20",
+                      "on-surface-variant": "#43474f",
+                      "on-secondary-fixed": "#001f27",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#001b3d",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#5f9caa",
+                      "surface-variant": "#e4e4c6",
+                      "secondary-fixed": "#b3ebff",
+                      "on-secondary-container": "#336c7d",
+                      "on-primary-container": "#7a94c3",
+                      "primary-container": "#0c2c55",
+                      "tertiary-fixed": "#afecfc",
+                      "secondary-fixed-dim": "#97cfe2",
+                      "surface-container-highest": "#e4e4c6",
+                      "surface": "#fbfbdc",
+                      "on-background": "#1b1d0a",
+                      "error": "#ba1a1a",
+                      "surface-container": "#f0f0d1",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#93d0df",
+                      "primary-fixed": "#d6e3ff",
+                      "inverse-on-surface": "#f3f3d3",
+                      "secondary-container": "#b3ebff",
+                      "primary": "#001736",
+                      "on-tertiary-fixed": "#001f25",
+                      "on-secondary-fixed-variant": "#094d5e",
+                      "inverse-primary": "#adc7f9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px",
+                      "xl": "32px",
+                      "xs": "4px",
+                      "gutter": "24px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "xxl": "48px"
+              },
+              "fontFamily": {
+                      "display": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .glass-panel {
+            background: rgba(251, 251, 220, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(12, 44, 85, 0.08);
+        }
+        .primary-gradient-bg {
+            background: linear-gradient(135deg, #001736 0%, #0c2c55 100%);
+        }
+        .step-active {
+            width: 40px;
+            background-color: #2c6577;
+        }
+        .step-inactive {
+            width: 12px;
+            background-color: #c4c6d0;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen flex flex-col overflow-x-hidden">
+<!-- Hero/Split Layout Container -->
+<main class="flex-grow flex flex-col lg:flex-row">
+<!-- Branding & Illustration Side (Desktop Only) -->
+<section class="hidden lg:flex lg:w-1/2 primary-gradient-bg relative overflow-hidden items-center justify-center p-xxl">
+<div class="absolute inset-0 opacity-20">
+<div class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-secondary blur-[120px]"></div>
+<div class="absolute bottom-[-5%] left-[-5%] w-[400px] h-[400px] rounded-full bg-primary-container blur-[100px]"></div>
+</div>
+<div class="relative z-10 max-w-[540px]">
+<div class="mb-xxl">
+<span class="font-display text-headline-lg text-on-primary">DocuMind AI</span>
+<p class="mt-md font-body-lg text-on-primary/80">Experience the next generation of document intelligence. Secure, fast, and engineered for enterprise precision.</p>
+</div>
+<div class="glass-panel p-lg rounded-xl border-white/10">
+<div class="flex items-start gap-md mb-md">
+<div class="bg-secondary/20 p-sm rounded-lg">
+<span class="material-symbols-outlined text-secondary-fixed">verified_user</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-on-primary">Trusted by Global Leaders</h4>
+<p class="font-body-sm text-on-primary/60 mt-xs">Over 500+ enterprises trust our cold-winter architecture for their sensitive data processing.</p>
+</div>
+</div>
+<div class="h-[1px] w-full bg-white/10 my-md"></div>
+<div class="flex gap-lg items-center opacity-70">
+<span class="material-symbols-outlined text-on-primary">shield_with_heart</span>
+<span class="material-symbols-outlined text-on-primary">cloud_done</span>
+<span class="material-symbols-outlined text-on-primary">monitoring</span>
+<span class="material-symbols-outlined text-on-primary">auto_awesome</span>
+</div>
+</div>
+<!-- Abstract Decorative Image -->
+<div class="mt-xxl rounded-xl overflow-hidden shadow-2xl border border-white/5">
+<img class="w-full h-48 object-cover grayscale brightness-75 hover:grayscale-0 transition-all duration-700 cursor-pointer" data-alt="A sophisticated macro architectural photograph showing crystalline glass structures and cold blue steel lines. The lighting is ethereal and sharp, reflecting a professional high-tech environment with a palette of deep navy and icy blue. The composition is minimalist and evokes a sense of deep intelligence and structured data processing in a futuristic laboratory or workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4qDOWjNYzWeMgbGUoVRg__YcU_f9ptouZTOAIKE8JrDN4nVUAwrcvQTX6pEDsnwHCeqGFNO9S0dLRsUNB_gAsB867UAkMbZOVlvGlwKOlAmPWdFXqsJJpIjOEnWEnerMK9tq2iSrP1johJgzyeLMyMTVuHxb1nCLKEizchwb7phzI3DlIp9dMTzyHE2CwClf2KSaT-cZwZFCpNZaMM0jhbF5ILwe-rSd8oupYUplZYk_L3srscGE4aDV2RJPhWZT7FYlCP9N0PLVv"/>
+</div>
+</div>
+</section>
+<!-- Sign Up Form Side -->
+<section class="flex-grow lg:w-1/2 flex items-center justify-center p-margin-mobile md:p-margin-desktop bg-surface">
+<div class="w-full max-w-[480px]">
+<!-- Logo Mobile -->
+<div class="lg:hidden mb-xl">
+<span class="font-display text-headline-md text-primary">DocuMind AI</span>
+</div>
+<div class="mb-xl">
+<h1 class="font-headline-lg text-primary mb-sm">Create your account</h1>
+<p class="font-body-md text-on-surface-variant">Join the workspace of the future today.</p>
+</div>
+<!-- Progress Bar -->
+<div class="flex items-center gap-sm mb-xxl">
+<div class="h-1.5 step-active rounded-full transition-all duration-500"></div>
+<div class="h-1.5 step-inactive rounded-full"></div>
+<div class="h-1.5 step-inactive rounded-full"></div>
+<span class="ml-auto font-label-md text-secondary">Step 1 of 3: Account Details</span>
+</div>
+<!-- Signup Form -->
+<form class="space-y-lg" onsubmit="return false">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-lg text-on-surface-variant">First Name</label>
+<input class="w-full h-12 px-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-secondary focus:ring-1 focus:ring-secondary/20 transition-all outline-none" placeholder="John" type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-lg text-on-surface-variant">Last Name</label>
+<input class="w-full h-12 px-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-secondary focus:ring-1 focus:ring-secondary/20 transition-all outline-none" placeholder="Doe" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-lg text-on-surface-variant">Work Email</label>
+<input class="w-full h-12 px-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-secondary focus:ring-1 focus:ring-secondary/20 transition-all outline-none" placeholder="name@company.com" type="email"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-lg text-on-surface-variant">Company Size</label>
+<select class="w-full h-12 px-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-secondary focus:ring-1 focus:ring-secondary/20 transition-all outline-none appearance-none">
+<option value="">Select range...</option>
+<option value="1-10">1-10 employees</option>
+<option value="11-50">11-50 employees</option>
+<option value="51-250">51-250 employees</option>
+<option value="251-1000">251-1000 employees</option>
+<option value="1000+">1000+ employees</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-lg text-on-surface-variant">Password</label>
+<div class="relative">
+<input class="w-full h-12 px-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-secondary focus:ring-1 focus:ring-secondary/20 transition-all outline-none" placeholder="Min. 8 characters" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-secondary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<button class="w-full py-md bg-primary text-on-primary font-label-lg rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex justify-center items-center gap-sm">
+                        Continue
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="relative my-xxl">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/30"></div>
+</div>
+<div class="relative flex justify-center text-label-md">
+<span class="bg-surface px-md text-on-surface-variant">OR SIGN UP WITH</span>
+</div>
+</div>
+<!-- Social Signup -->
+<div class="grid grid-cols-2 gap-md">
+<button class="flex items-center justify-center gap-sm h-12 rounded-xl border border-outline-variant hover:bg-surface-container transition-all active:scale-[0.98]">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+<span class="font-label-lg text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-sm h-12 rounded-xl border border-outline-variant hover:bg-surface-container transition-all active:scale-[0.98]">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"></path>
+</svg>
+<span class="font-label-lg text-on-surface">SSO</span>
+</button>
+</div>
+<div class="mt-xxl text-center">
+<p class="font-body-sm text-on-surface-variant">
+                        Already have an account? 
+                        <a class="text-secondary font-semibold hover:underline" href="#">Log In</a>
+</p>
+</div>
+<!-- Legal/Footer Links -->
+<div class="mt-xxl pt-lg border-t border-outline-variant/20 flex flex-wrap justify-center gap-md">
+<a class="font-label-md text-on-surface-variant/60 hover:text-secondary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-md text-on-surface-variant/60 hover:text-secondary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-md text-on-surface-variant/60 hover:text-secondary transition-colors" href="#">Security</a>
+</div>
+</div>
+</section>
+</main>
+<!-- Simple Atmospheric Effect -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[-1] overflow-hidden opacity-50">
+<div class="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-secondary-container blur-[150px] animate-pulse"></div>
+<div class="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-primary-fixed blur-[200px] opacity-30"></div>
+</div>
+<script>
+        // Micro-interaction for the progress bar
+        const inputs = document.querySelectorAll('input, select');
+        const progress = document.querySelector('.step-active');
+        const totalFields = inputs.length;
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                let filled = 0;
+                inputs.forEach(i => { if(i.value) filled++ });
+                const percentage = (filled / totalFields) * 100;
+                // Just a visual hint, not actual navigation logic for this demo
+                if(percentage > 0) {
+                    progress.style.width = Math.max(40, (percentage / 100) * 150) + 'px';
+                }
+            });
+        });
+
+        // Hover animation for the image to make it feel "active"
+        const heroImage = document.querySelector('img');
+        heroImage.addEventListener('mouseenter', () => {
+            heroImage.style.transform = 'scale(1.05)';
+        });
+        heroImage.addEventListener('mouseleave', () => {
+            heroImage.style.transform = 'scale(1)';
+        });
+    </script>
+</body></html>

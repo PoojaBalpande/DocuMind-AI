@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | DocuMind AI</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#dcdcbe",
+                    "outline-variant": "#c4c6d0",
+                    "secondary": "#2c6577",
+                    "surface-bright": "#fbfbdc",
+                    "on-surface": "#1b1d0a",
+                    "on-primary-fixed-variant": "#2c4771",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#004e5b",
+                    "surface-container-high": "#eaeacb",
+                    "surface-tint": "#445f8b",
+                    "outline": "#74777f",
+                    "tertiary-container": "#003139",
+                    "inverse-surface": "#30321d",
+                    "surface-container-low": "#f6f6d6",
+                    "primary-fixed-dim": "#adc7f9",
+                    "on-tertiary": "#ffffff",
+                    "background": "#fbfbdc",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary": "#001b20",
+                    "on-surface-variant": "#43474f",
+                    "on-secondary-fixed": "#001f27",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#001b3d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-container": "#5f9caa",
+                    "surface-variant": "#e4e4c6",
+                    "secondary-fixed": "#b3ebff",
+                    "on-secondary-container": "#336c7d",
+                    "on-primary-container": "#7a94c3",
+                    "primary-container": "#0c2c55",
+                    "tertiary-fixed": "#afecfc",
+                    "secondary-fixed-dim": "#97cfe2",
+                    "surface-container-highest": "#e4e4c6",
+                    "surface": "#fbfbdc",
+                    "on-background": "#1b1d0a",
+                    "error": "#ba1a1a",
+                    "surface-container": "#f0f0d1",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#93d0df",
+                    "primary-fixed": "#d6e3ff",
+                    "inverse-on-surface": "#f3f3d3",
+                    "secondary-container": "#b3ebff",
+                    "primary": "#001736",
+                    "on-tertiary-fixed": "#001f25",
+                    "on-secondary-fixed-variant": "#094d5e",
+                    "inverse-primary": "#adc7f9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "unit": "4px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "xl": "32px",
+                    "xs": "4px",
+                    "gutter": "24px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "xxl": "48px"
+            },
+            "fontFamily": {
+                    "display": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-glow {
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(24px);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #0c2c55 0%, #2c6577 100%);
+        }
+        .soft-shadow {
+            box-shadow: 0 12px 40px rgba(12, 44, 85, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface min-h-screen overflow-x-hidden flex items-center justify-center">
+<!-- Split Screen Container -->
+<main class="flex w-full min-h-screen max-w-full">
+<!-- Left Side: Hero Section -->
+<section class="hidden md:flex md:w-1/2 lg:w-3/5 relative overflow-hidden items-center justify-center p-xxl hero-gradient">
+<!-- Decorative Elements -->
+<div class="absolute inset-0 opacity-20">
+<div class="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-secondary rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-container rounded-full blur-[100px]"></div>
+</div>
+<div class="relative z-10 max-w-lg text-center md:text-left">
+<div class="mb-lg">
+<span class="font-display text-headline-lg font-bold text-on-primary block mb-sm">DocuMind AI</span>
+<div class="h-1 w-24 bg-secondary-fixed"></div>
+</div>
+<h1 class="font-display text-display text-on-primary mb-md leading-tight">
+                    Intelligence and Precision for Enterprise Data.
+                </h1>
+<p class="font-body-lg text-on-primary/80 mb-xl max-w-md">
+                    Seamlessly process complex documents with our advanced neural processing engine. Built for high-stakes environments.
+                </p>
+<!-- Abstract Hero Image (Data-Alt required) -->
+<div class="rounded-xl overflow-hidden glass-glow border border-white/10 soft-shadow">
+<img alt="Abstract Intelligence Visualization" class="w-full h-auto object-cover aspect-video" data-alt="A highly sophisticated abstract 3D visualization representing flowing data and neural networks in a deep icy blue and navy palette. The lighting is ethereal and soft, creating a sense of calm high-tech precision. Translucent crystalline structures catch the light with subtle glows, evoking a premium cold-winter technology aesthetic. The composition is balanced and minimalist, reflecting the reliability and intelligence of enterprise AI software." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc8lvN87MioVCzBRLSw7d_LkxSMlvrhUbEc0Qz53-1hXIs8z4CLdgSaCTc-8PEvgwiAKq5ewpCmnOiz7Xj6sr40_-o_GMvV8YqUhiSBa-ZjdS6OLf6PQPqSxCPub5X0Cn6efc2K-nsOxRUdy0Wo9fcarYYTxlCr1bxaS5gplqO9wmnwb-kyPe3UwKe2779KSf0r4A08xYGgvyXAcioNa1DO3Ar2iO5SddrT9W-oLVW19KloGqISDRVdpyUhSGPYARrrRB6X7_4m0e7"/>
+</div>
+</div>
+</section>
+<!-- Right Side: Login Form -->
+<section class="w-full md:w-1/2 lg:w-2/5 flex flex-col items-center justify-center bg-surface-container-low p-margin-mobile md:p-margin-desktop">
+<div class="w-full max-w-[400px]">
+<!-- Header / Logo for Mobile -->
+<div class="flex items-center gap-sm mb-xxl md:hidden">
+<span class="material-symbols-outlined text-primary text-headline-md">psychology</span>
+<span class="font-display text-headline-sm font-bold text-primary">DocuMind AI</span>
+</div>
+<div class="mb-xl">
+<h2 class="font-display text-headline-lg text-on-surface mb-xs">Welcome back</h2>
+<p class="font-body-md text-on-surface-variant">Log in to your secure workspace.</p>
+</div>
+<!-- Social Login -->
+<button class="w-full flex items-center justify-center gap-md py-md px-lg bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-high transition-all duration-300 rounded-xl font-label-lg text-on-surface group active:scale-[0.98]">
+<img alt="Google Logo" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgVS4_B1dpGWd9k-deIZq-rmKFtLhcMXjtozsiUPNpDHvU2moX82xQ8A8-2e7_LSZN11Tvc40U2HvImZXGN_qY_z_Qu7PTeM12xA83n85yLRa9O13rpQ1HIezDXEK76wPReSnUBy7JvepVBJohaJX9YN0TtupLygon37QGlt89-Xh3pThvpaLyBMsfw9wX3Wn2BYIWcamqYLsuzLusaSVlt65JB1Ql_y9DOCtTjc7CB47AQf4KyqGMVnkqqRH1kGk_h4IpPYk1OLyj"/>
+<span>Sign in with Google</span>
+</button>
+<div class="relative my-xl flex items-center justify-center">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/30"></div>
+</div>
+<span class="relative px-md bg-surface-container-low font-label-md text-outline">OR EMAIL</span>
+</div>
+<!-- Form -->
+<form class="flex flex-col gap-lg">
+<div class="flex flex-col gap-xs">
+<label class="font-label-lg text-on-surface-variant px-xs" for="email">Work Email</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-outline/50" id="email" placeholder="name@company.com" type="email"/>
+</div>
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center px-xs">
+<label class="font-label-lg text-on-surface-variant" for="password">Password</label>
+<a class="font-label-md text-secondary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all placeholder:text-outline/50" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-body-lg">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-sm px-xs">
+<input class="w-4 h-4 rounded border-outline-variant text-secondary focus:ring-secondary" id="remember" type="checkbox"/>
+<label class="font-body-sm text-on-surface-variant cursor-pointer" for="remember">Keep me signed in for 30 days</label>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary-container hover:bg-primary text-on-primary font-label-lg py-md rounded-xl transition-all duration-300 soft-shadow active:scale-[0.98] mt-md" type="submit">
+                        Sign In
+                    </button>
+</form>
+<div class="mt-xxl text-center">
+<p class="font-body-md text-on-surface-variant">
+                        New to DocuMind AI? 
+                        <a class="text-secondary font-semibold hover:underline decoration-2 underline-offset-4" href="#">Create an account</a>
+</p>
+</div>
+</div>
+<!-- Simple Footer Info -->
+<footer class="mt-auto pt-xl w-full max-w-[400px]">
+<div class="flex flex-wrap gap-md justify-center md:justify-start">
+<a class="font-label-md text-outline hover:text-on-surface transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-md text-outline hover:text-on-surface transition-colors" href="#">Security</a>
+<a class="font-label-md text-outline hover:text-on-surface transition-colors" href="#">Contact Support</a>
+</div>
+<p class="mt-sm font-label-md text-outline/60 text-center md:text-left">
+                    © 2024 DocuMind AI. Built for Cold Winter Technology environments.
+                </p>
+</footer>
+</section>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.parentElement.classList.add('scale-[1.01]');
+                });
+                input.addEventListener('blur', () => {
+                    input.parentElement.classList.remove('scale-[1.01]');
+                });
+            });
+
+            // Prevent form submission for demo
+            document.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="flex items-center justify-center gap-sm"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Verifying...</span>';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    alert('Login simulation complete. Identity verified.');
+                }, 1500);
+            });
+        });
+    </script>
+</body></html>
