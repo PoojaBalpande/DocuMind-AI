@@ -53,3 +53,20 @@ docker-compose.override.yml
 # Misc
 *.log
 .vercel
+
+# Environment files
+backend/.env
+frontend/.env
+
+# Python caches
+.pytest_cache/
+.mypy_cache/
+
+# Alembic
+alembic.ini
+
+# Uploads (future PDF uploads)
+backend/uploads/
+
+# Mac/Linux
+*.DS_Store
