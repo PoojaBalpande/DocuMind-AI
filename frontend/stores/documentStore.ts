@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import type { Document } from '@/types';
-import { mockDocuments } from '@/lib/mockData';
+import { documentService, type ApiDocument } from '@/services/documentService';
 
 type SortField = 'title' | 'createdAt' | 'fileSizeBytes' | 'status';
 type SortOrder = 'asc' | 'desc';
@@ -15,13 +15,33 @@ interface DocumentState {
   sortField: SortField;
   sortOrder: SortOrder;
   isUploading: boolean;
+  error: string | null;
   setSearchQuery: (query: string) => void;
   setFilterStatus: (status: string) => void;
   setSorting: (field: SortField, order: SortOrder) => void;
-  uploadDocument: (file: { name: string; size: number; type: string }) => Promise<void>;
+  uploadDocument: (file: File) => Promise<void>;
   deleteDocument: (id: string) => void;
   applyFilters: () => void;
   initDocuments: () => void;
+}
+
+/** Map backend ApiDocument to frontend Document type */
+function mapApiDocument(api: ApiDocument): Document {
+  return {
+    id: api.id,
+    userId: api.user_id,
+    title: api.original_filename.replace(/\.[^/.]+$/, ''),
+    fileName: api.original_filename,
+    fileType: 'pdf',
+    fileSizeBytes: api.file_size,
+    status: api.status as Document['status'],
+    pageCount: undefined,
+    chunkCount: 0,
+    tags: [],
+    metadata: {},
+    createdAt: api.created_at,
+    updatedAt: api.updated_at,
+  };
 }
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
@@ -32,6 +52,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   sortField: 'createdAt',
   sortOrder: 'desc',
   isUploading: false,
+  error: null,
 
   setSearchQuery: (query) => {
     set({ searchQuery: query });
@@ -48,40 +69,27 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     get().applyFilters();
   },
 
-  uploadDocument: async (file) => {
-    set({ isUploading: true });
-    await new Promise((r) => setTimeout(r, 2000));
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
-    const fileType = (['pdf', 'docx', 'txt', 'md'].includes(ext) ? ext : 'pdf') as Document['fileType'];
-    const newDoc: Document = {
-      id: 'doc_' + Date.now(),
-      userId: 'usr_001',
-      title: file.name.replace(/\.[^/.]+$/, ''),
-      fileName: file.name,
-      fileType,
-      fileSizeBytes: file.size,
-      status: 'processing',
-      pageCount: Math.floor(Math.random() * 50) + 5,
-      chunkCount: 0,
-      tags: [],
-      metadata: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    set((state) => ({ documents: [newDoc, ...state.documents], isUploading: false }));
-    get().applyFilters();
-    // Simulate processing completion
-    setTimeout(() => {
-      set((state) => ({
-        documents: state.documents.map((d) => d.id === newDoc.id ? { ...d, status: 'ready' as const, chunkCount: Math.floor(Math.random() * 200) + 20 } : d),
-      }));
+  uploadDocument: async (file: File) => {
+    set({ isUploading: true, error: null });
+    try {
+      const result = await documentService.uploadDocument(file);
+      const newDoc = mapApiDocument(result.document);
+      set((state) => ({ documents: [newDoc, ...state.documents], isUploading: false }));
       get().applyFilters();
-    }, 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      set({ isUploading: false, error: message });
+    }
   },
 
-  deleteDocument: (id) => {
-    set((state) => ({ documents: state.documents.filter((d) => d.id !== id) }));
-    get().applyFilters();
+  deleteDocument: async (id: string) => {
+    try {
+      await documentService.deleteDocument(id);
+      set((state) => ({ documents: state.documents.filter((d) => d.id !== id) }));
+      get().applyFilters();
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   },
 
   applyFilters: () => {
@@ -105,8 +113,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     set({ filteredDocuments: filtered });
   },
 
-  initDocuments: () => {
-    set({ documents: mockDocuments });
-    get().applyFilters();
+  initDocuments: async () => {
+    try {
+      const data = await documentService.getDocuments();
+      const documents = data.documents.map(mapApiDocument);
+      set({ documents });
+      get().applyFilters();
+    } catch (err) {
+      console.error('Failed to load documents:', err);
+      set({ documents: [] });
+      get().applyFilters();
+    }
   },
 }));

@@ -17,7 +17,7 @@ export default function DocumentsPage() {
     e.preventDefault();
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
-    files.forEach((file) => uploadDocument({ name: file.name, size: file.size, type: file.type }));
+    files.forEach((file) => uploadDocument(file));
   }, [uploadDocument]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -27,7 +27,7 @@ export default function DocumentsPage() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => uploadDocument({ name: file.name, size: file.size, type: file.type }));
+    files.forEach((file) => uploadDocument(file));
   };
 
   const formatFileSize = (bytes: number) => {

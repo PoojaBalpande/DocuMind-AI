@@ -2,7 +2,8 @@
 
 import { create } from 'zustand';
 import type { ChatSession, Message } from '@/types';
-import { mockChatSessions, mockMessages, mockAIResponses } from '@/lib/mockData';
+import { chatService, type ApiChatSession } from '@/services/chatService';
+import { mockAIResponses } from '@/lib/mockData';
 
 interface ChatState {
   sessions: ChatSession[];
@@ -17,6 +18,20 @@ interface ChatState {
   initChat: () => void;
 }
 
+/** Map backend ApiChatSession to frontend ChatSession type */
+function mapApiSession(api: ApiChatSession): ChatSession {
+  return {
+    id: api.id,
+    userId: api.user_id,
+    title: api.title,
+    model: 'gpt-4o',
+    isPinned: false,
+    messageCount: 0,
+    createdAt: api.created_at,
+    updatedAt: api.updated_at,
+  };
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
   activeSessionId: null,
@@ -24,14 +39,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isGenerating: false,
 
   setActiveSession: (id) => {
-    set({ activeSessionId: id, messages: mockMessages[id] || [] });
+    // Messages are local-only for now (no AI backend yet)
+    set({ activeSessionId: id, messages: [] });
   },
 
   createNewChat: (title) => {
-    const newId = 'chat_' + Date.now();
-    const newSession: ChatSession = {
-      id: newId,
-      userId: 'usr_001',
+    const tempId = 'chat_' + Date.now();
+    const tempSession: ChatSession = {
+      id: tempId,
+      userId: '',
       title: title || 'New Chat',
       model: 'gpt-4o',
       isPinned: false,
@@ -40,11 +56,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
       updatedAt: new Date().toISOString(),
     };
     set((state) => ({
-      sessions: [newSession, ...state.sessions],
-      activeSessionId: newId,
+      sessions: [tempSession, ...state.sessions],
+      activeSessionId: tempId,
       messages: [],
     }));
-    return newId;
+
+    // Create session in backend (async, update ID when done)
+    chatService.createSession(title || 'New Chat').then((apiSession) => {
+      set((state) => ({
+        sessions: state.sessions.map((s) =>
+          s.id === tempId ? mapApiSession(apiSession) : s
+        ),
+        activeSessionId: state.activeSessionId === tempId ? apiSession.id : state.activeSessionId,
+      }));
+    }).catch((err) => {
+      console.error('Failed to create chat session:', err);
+    });
+
+    return tempId;
   },
 
   sendMessage: (content) => {
@@ -61,7 +90,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set((state) => ({ messages: [...state.messages, userMsg], isGenerating: true }));
 
-    // Simulate AI response
+    // Mock AI response (no OpenAI integration yet)
     setTimeout(() => {
       const response = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
       const aiMsg: Message = {
@@ -124,11 +153,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
   },
 
-  initChat: () => {
-    set({ sessions: mockChatSessions });
-    if (mockChatSessions.length > 0) {
-      const firstId = mockChatSessions[0].id;
-      set({ activeSessionId: firstId, messages: mockMessages[firstId] || [] });
+  initChat: async () => {
+    try {
+      const apiSessions = await chatService.getSessions();
+      const sessions = apiSessions.map(mapApiSession);
+      set({ sessions });
+      if (sessions.length > 0) {
+        set({ activeSessionId: sessions[0].id, messages: [] });
+      }
+    } catch (err) {
+      console.error('Failed to load chat sessions:', err);
+      set({ sessions: [] });
     }
   },
 }));
