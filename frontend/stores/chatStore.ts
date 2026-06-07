@@ -38,9 +38,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isGenerating: false,
 
-  setActiveSession: (id) => {
-    // Messages are local-only for now (no AI backend yet)
+  setActiveSession: async (id) => {
     set({ activeSessionId: id, messages: [] });
+    try {
+      const history = await chatService.getMessages(id);
+      set({ messages: history });
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+    }
   },
 
   createNewChat: (title) => {
@@ -76,12 +81,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     return tempId;
   },
 
-  sendMessage: (content) => {
+  sendMessage: async (content) => {
     const { activeSessionId } = get();
     if (!activeSessionId) return;
 
     const userMsg: Message = {
-      id: 'msg_' + Date.now(),
+      id: 'msg_user_' + Date.now(),
       sessionId: activeSessionId,
       role: 'user',
       content,
@@ -90,25 +95,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set((state) => ({ messages: [...state.messages, userMsg], isGenerating: true }));
 
-    // Mock AI response (no OpenAI integration yet)
-    setTimeout(() => {
-      const response = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
+    try {
+      const result = await chatService.sendMessage(activeSessionId, content);
       const aiMsg: Message = {
-        id: 'msg_' + (Date.now() + 1),
+        id: 'msg_ai_' + Date.now(),
         sessionId: activeSessionId,
         role: 'assistant',
-        content: response,
-        citations: [
-          {
-            id: 'cit_' + Date.now(),
-            messageId: 'msg_' + (Date.now() + 1),
-            documentId: 'doc_001',
-            documentTitle: 'Q3_Report.pdf',
-            pageNumber: Math.floor(Math.random() * 40) + 1,
-            relevanceScore: 0.92,
-            fileType: 'pdf',
-          },
-        ],
+        content: result.answer,
+        citations: result.sources.map((src, idx) => ({
+          id: `cit_${Date.now()}_${idx}`,
+          messageId: 'msg_ai_' + Date.now(),
+          documentTitle: src.document,
+          pageNumber: src.page || undefined,
+        })),
         createdAt: new Date().toISOString(),
       };
       set((state) => ({
@@ -120,29 +119,52 @@ export const useChatStore = create<ChatState>((set, get) => ({
             : s
         ),
       }));
-    }, 1500 + Math.random() * 1000);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      set({ isGenerating: false });
+      const errorMsg: Message = {
+        id: 'msg_error_' + Date.now(),
+        sessionId: activeSessionId,
+        role: 'assistant',
+        content: 'Error: I couldn\'t retrieve an answer from the documents.',
+        createdAt: new Date().toISOString(),
+      };
+      set((state) => ({ messages: [...state.messages, errorMsg] }));
+    }
   },
 
-  regenerateLastResponse: () => {
+  regenerateLastResponse: async () => {
     const { messages, activeSessionId } = get();
     if (!activeSessionId) return;
     const lastAiIdx = messages.map((m) => m.role).lastIndexOf('assistant');
     if (lastAiIdx === -1) return;
 
     const updated = messages.slice(0, lastAiIdx);
+    const lastUserMsg = updated.filter(m => m.role === 'user').pop();
+    if (!lastUserMsg) return;
+
     set({ messages: updated, isGenerating: true });
 
-    setTimeout(() => {
-      const response = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
+    try {
+      const result = await chatService.sendMessage(activeSessionId, lastUserMsg.content);
       const aiMsg: Message = {
-        id: 'msg_' + Date.now(),
+        id: 'msg_ai_' + Date.now(),
         sessionId: activeSessionId,
         role: 'assistant',
-        content: response,
+        content: result.answer,
+        citations: result.sources.map((src, idx) => ({
+          id: `cit_${Date.now()}_${idx}`,
+          messageId: 'msg_ai_' + Date.now(),
+          documentTitle: src.document,
+          pageNumber: src.page || undefined,
+        })),
         createdAt: new Date().toISOString(),
       };
       set((state) => ({ messages: [...state.messages, aiMsg], isGenerating: false }));
-    }, 1500);
+    } catch (err) {
+      console.error('Failed to regenerate response:', err);
+      set({ isGenerating: false });
+    }
   },
 
   deleteSession: (id) => {
@@ -159,7 +181,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const sessions = apiSessions.map(mapApiSession);
       set({ sessions });
       if (sessions.length > 0) {
-        set({ activeSessionId: sessions[0].id, messages: [] });
+        const firstSessionId = sessions[0].id;
+        set({ activeSessionId: firstSessionId, messages: [] });
+        try {
+          const history = await chatService.getMessages(firstSessionId);
+          set({ messages: history });
+        } catch (err) {
+          console.error('Failed to load initial session messages:', err);
+        }
       }
     } catch (err) {
       console.error('Failed to load chat sessions:', err);

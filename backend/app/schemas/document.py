@@ -23,5 +23,6 @@ class DocumentListResponse(BaseModel):
 
 
 class UploadResponse(BaseModel):
-    message: str
-    document: DocumentResponse
+    id: str
+    status: str
+

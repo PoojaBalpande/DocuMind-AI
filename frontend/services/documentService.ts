@@ -34,7 +34,7 @@ export const documentService = {
     return res.json();
   },
 
-  async uploadDocument(file: File): Promise<{ message: string; document: ApiDocument }> {
+  async uploadDocument(file: File): Promise<{ id: string; status: string }> {
     const formData = new FormData();
     formData.append('file', file);
 

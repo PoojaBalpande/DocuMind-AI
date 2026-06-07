@@ -72,10 +72,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   uploadDocument: async (file: File) => {
     set({ isUploading: true, error: null });
     try {
-      const result = await documentService.uploadDocument(file);
-      const newDoc = mapApiDocument(result.document);
-      set((state) => ({ documents: [newDoc, ...state.documents], isUploading: false }));
-      get().applyFilters();
+      await documentService.uploadDocument(file);
+      await get().initDocuments();
+      set({ isUploading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       set({ isUploading: false, error: message });

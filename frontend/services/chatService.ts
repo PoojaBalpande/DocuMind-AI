@@ -45,40 +45,39 @@ export const chatService = {
     return res.json();
   },
 
-  // ── Mock AI responses (no OpenAI integration yet) ──────────────
-
-  async sendMessage(_sessionId: string, _content: string): Promise<Message> {
-    // Simulate AI thinking delay
-    await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1000));
-    const response = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
-    return {
-      id: 'msg_' + Date.now(),
-      sessionId: _sessionId,
-      role: 'assistant',
-      content: response,
-      citations: [
-        {
-          id: 'cit_' + Date.now(),
-          messageId: 'msg_' + Date.now(),
-          documentTitle: 'Q3_Report.pdf',
-          pageNumber: Math.floor(Math.random() * 40) + 1,
-          relevanceScore: 0.92,
-          fileType: 'pdf',
-        },
-      ],
-      createdAt: new Date().toISOString(),
-    };
+  async getMessages(sessionId: string): Promise<Message[]> {
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}/messages`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to fetch chat history');
+    }
+    const apiMessages = await res.json();
+    return apiMessages.map((msg: any) => ({
+      id: msg.id,
+      sessionId: msg.session_id,
+      role: msg.role,
+      content: msg.content,
+      citations: msg.citations ? msg.citations.map((cit: any, idx: number) => ({
+        id: `cit_${msg.id}_${idx}`,
+        messageId: msg.id,
+        documentTitle: cit.document,
+        pageNumber: cit.page,
+      })) : [],
+      createdAt: msg.created_at,
+    }));
   },
 
-  async regenerateResponse(sessionId: string): Promise<Message> {
-    await new Promise((r) => setTimeout(r, 1500));
-    const response = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
-    return {
-      id: 'msg_' + Date.now(),
-      sessionId,
-      role: 'assistant',
-      content: response,
-      createdAt: new Date().toISOString(),
-    };
+  async sendMessage(sessionId: string, content: string): Promise<{ answer: string; sources: { document: string; page: number | null }[] }> {
+    const res = await fetch(`${API_BASE}/api/chat/ask`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ session_id: sessionId, message: content }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to send message' }));
+      throw new Error(err.detail || 'Failed to send message');
+    }
+    return res.json();
   },
 };

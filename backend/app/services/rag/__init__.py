@@ -1,1 +1,1 @@
-# DocuMind AI — RAG Pipeline Services
+"""RAG query and generation pipeline."""

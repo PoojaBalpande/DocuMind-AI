@@ -23,6 +23,23 @@ class MessageResponse(BaseModel):
     session_id: str
     role: str
     content: str
+    citations: list[dict] | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ChatAskRequest(BaseModel):
+    session_id: str
+    message: str
+
+
+class ChatAskSource(BaseModel):
+    document: str
+    page: int | None = None
+
+
+class ChatAskResponse(BaseModel):
+    answer: str
+    sources: list[ChatAskSource]
+

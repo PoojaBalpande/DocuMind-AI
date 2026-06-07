@@ -4,7 +4,7 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -13,6 +13,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.document import Document
 from app.schemas.document import DocumentResponse, DocumentListResponse, UploadResponse
+from app.services.document_processor.ingestion_service import ingest_document
 
 router = APIRouter()
 
@@ -40,11 +41,12 @@ def list_documents(
 
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Upload a PDF document."""
+    """Upload a PDF document and trigger asynchronous text ingestion."""
     # Validate MIME type
     if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
@@ -76,22 +78,25 @@ async def upload_document(
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # Store metadata in database
+    # Store metadata in database (status="processing")
     document = Document(
         user_id=current_user.id,
         filename=unique_filename,
         original_filename=file.filename or "untitled.pdf",
         file_size=file_size,
         storage_path=str(file_path),
-        status="ready",
+        status="processing",
     )
     db.add(document)
     db.commit()
     db.refresh(document)
 
+    # Trigger document ingestion pipeline asynchronously
+    background_tasks.add_task(ingest_document, db, document.id)
+
     return UploadResponse(
-        message="Document uploaded successfully",
-        document=DocumentResponse.model_validate(document),
+        id=document.id,
+        status=document.status,
     )
 
 

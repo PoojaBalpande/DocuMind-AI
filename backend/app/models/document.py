@@ -34,3 +34,5 @@ class Document(Base):
 
     # Relationships
     owner = relationship("User", back_populates="documents")
+    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+
