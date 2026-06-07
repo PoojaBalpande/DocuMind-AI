@@ -22,6 +22,20 @@ export interface ApiChatSession {
   updated_at: string;
 }
 
+export interface ApiCitation {
+  document: string;
+  page: number | null;
+}
+
+export interface ApiMessage {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: ApiCitation[] | null;
+  created_at: string;
+}
+
 export const chatService = {
   async getSessions(): Promise<ApiChatSession[]> {
     const res = await fetch(`${API_BASE}/api/chat/sessions`, {
@@ -52,17 +66,17 @@ export const chatService = {
     if (!res.ok) {
       throw new Error('Failed to fetch chat history');
     }
-    const apiMessages = await res.json();
-    return apiMessages.map((msg: any) => ({
+    const apiMessages: ApiMessage[] = await res.json();
+    return apiMessages.map((msg: ApiMessage) => ({
       id: msg.id,
       sessionId: msg.session_id,
       role: msg.role,
       content: msg.content,
-      citations: msg.citations ? msg.citations.map((cit: any, idx: number) => ({
+      citations: msg.citations ? msg.citations.map((cit: ApiCitation, idx: number) => ({
         id: `cit_${msg.id}_${idx}`,
         messageId: msg.id,
         documentTitle: cit.document,
-        pageNumber: cit.page,
+        pageNumber: cit.page ?? undefined,
       })) : [],
       createdAt: msg.created_at,
     }));

@@ -36,7 +36,9 @@ export default function ChatPage() {
   // Loading text cycling effect
   useEffect(() => {
     if (isGenerating) {
-      setLoadingMsg('Thinking...');
+      const timeout = setTimeout(() => {
+        setLoadingMsg('Thinking...');
+      }, 0);
       const interval = setInterval(() => {
         setLoadingMsg((prev) => {
           if (prev === 'Thinking...') return 'Analyzing documents...';
@@ -44,7 +46,10 @@ export default function ChatPage() {
           return 'Generating answer...';
         });
       }, 1500);
-      return () => clearInterval(interval);
+      return () => {
+        clearTimeout(timeout);
+        clearInterval(interval);
+      };
     }
   }, [isGenerating]);
 

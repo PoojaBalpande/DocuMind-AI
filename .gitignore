@@ -62,11 +62,22 @@ frontend/.env
 .pytest_cache/
 .mypy_cache/
 
-# Alembic
-alembic.ini
-
 # Uploads (future PDF uploads)
 backend/uploads/
 
 # Mac/Linux
 *.DS_Store
+
+# Local environment
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+
+# Uploads
+backend/uploads/
+
+# Hugging Face cache
+.cache/
+.huggingface/
