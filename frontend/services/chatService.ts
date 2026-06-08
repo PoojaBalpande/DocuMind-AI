@@ -24,7 +24,9 @@ export interface ApiChatSession {
 
 export interface ApiCitation {
   document: string;
+  document_id: string;
   page: number | null;
+  snippet?: string;
 }
 
 export interface ApiMessage {
@@ -75,8 +77,10 @@ export const chatService = {
       citations: msg.citations ? msg.citations.map((cit: ApiCitation, idx: number) => ({
         id: `cit_${msg.id}_${idx}`,
         messageId: msg.id,
+        documentId: cit.document_id,
         documentTitle: cit.document,
         pageNumber: cit.page ?? undefined,
+        excerpt: cit.snippet,
       })) : [],
       createdAt: msg.created_at,
     }));
