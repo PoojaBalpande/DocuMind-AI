@@ -100,6 +100,35 @@ async def upload_document(
     )
 
 
+@router.get("/{document_id}/file")
+@router.get("/{document_id}/download")
+def get_document_file(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Serve the PDF file associated with a document_id safely."""
+    from fastapi.responses import FileResponse
+    document = (
+        db.query(Document)
+        .filter(Document.id == document_id, Document.user_id == current_user.id)
+        .first()
+    )
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    if not os.path.exists(document.storage_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF file not found on disk",
+        )
+
+    return FileResponse(document.storage_path, media_type="application/pdf")
+
+
 @router.delete("/{document_id}", status_code=status.HTTP_200_OK)
 def delete_document(
     document_id: str,

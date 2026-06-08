@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useChatStore } from '@/stores/chatStore';
 import { useDocumentStore } from '@/stores/documentStore';
 import { suggestedQuestions } from '@/lib/mockData';
+import type { Citation } from '@/types';
+
+const PdfViewerModal = dynamic(
+  () => import('@/components/chat/PdfViewerModal'),
+  { ssr: false }
+);
 
 export default function ChatPage() {
   const {
@@ -14,6 +21,7 @@ export default function ChatPage() {
     setActiveSession,
     createNewChat,
     sendMessage,
+    stopGeneration,
     regenerateLastResponse,
     deleteSession,
     initChat,
@@ -22,6 +30,8 @@ export default function ChatPage() {
   const { documents, initDocuments } = useDocumentStore();
   const [input, setInput] = useState('');
   const [loadingMsg, setLoadingMsg] = useState('Thinking...');
+  const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,8 +40,8 @@ export default function ChatPage() {
   }, [initChat, initDocuments]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: isGenerating ? 'auto' : 'smooth' });
+  }, [messages, isGenerating]);
 
   // Loading text cycling effect
   useEffect(() => {
@@ -202,6 +212,9 @@ export default function ChatPage() {
                       {i < msg.content.split('\n').length - 1 && <br />}
                     </span>
                   ))}
+                  {msg.role === 'assistant' && isGenerating && msg.id === messages[messages.length - 1]?.id && (
+                    <span className="inline-block w-1.5 h-4 bg-secondary ml-xs animate-pulse align-middle"></span>
+                  )}
                 </div>
 
                 {/* Clickable Citation Cards (Display below AI messages) */}
@@ -213,23 +226,45 @@ export default function ChatPage() {
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          alert(`Viewing Source Citation:\nDocument: ${cit.documentTitle}\nPage: ${cit.pageNumber || 'N/A'}`);
+                          setActiveCitation(cit);
                         }}
-                        className="bg-white hover:bg-surface-container border border-outline-variant/20 rounded-xl p-xs flex flex-col items-start min-w-[120px] transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="bg-white hover:bg-surface-container border border-outline-variant/20 rounded-xl p-sm flex flex-col items-start min-w-[180px] max-w-[280px] transition-all cursor-pointer shadow-sm active:scale-95 text-left gap-xs"
                       >
-                        <div className="flex items-center gap-xs text-[11px] font-semibold text-primary truncate max-w-[180px]">
+                        <div className="flex items-center gap-xs text-[11px] font-semibold text-primary truncate max-w-full">
                           <span>📄</span>
                           <span className="truncate">{cit.documentTitle}</span>
                         </div>
-                        <span className="text-[10px] text-on-surface-variant/70 mt-xxs">Page {cit.pageNumber || 'N/A'}</span>
+                        <span className="text-[10px] text-on-surface-variant/70">Page {cit.pageNumber || 'N/A'}</span>
+                        {cit.excerpt && (
+                          <p className="text-[10px] text-on-surface-variant italic line-clamp-2 mt-xxs opacity-85 border-t border-outline-variant/10 pt-xs w-full">
+                            &ldquo;{cit.excerpt}&rdquo;
+                          </p>
+                        )}
                       </a>
                     ))}
                   </div>
                 )}
 
-                <span className={`text-label-md px-sm ${msg.role === 'user' ? 'text-on-surface-variant' : 'text-secondary'}`}>
-                  {msg.role === 'user' ? 'You' : 'DocuMind AI'} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                <div className={`flex items-center gap-sm px-sm mt-xs ${msg.role === 'user' ? 'text-on-surface-variant' : 'text-secondary'}`}>
+                  <span className="text-label-md">
+                    {msg.role === 'user' ? 'You' : 'DocuMind AI'} • {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {msg.role === 'assistant' && msg.content && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(msg.content);
+                        setCopiedMessageId(msg.id);
+                        setTimeout(() => setCopiedMessageId(null), 2000);
+                      }}
+                      className="text-label-md hover:underline flex items-center gap-xxs active:scale-95 transition-all text-secondary"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        {copiedMessageId === msg.id ? 'check' : 'content_copy'}
+                      </span>
+                      <span>{copiedMessageId === msg.id ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
 
@@ -252,7 +287,18 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Regenerate */}
+          {/* Stop Generation or Regenerate Controls */}
+          {isGenerating && (
+            <div className="px-xl pb-sm flex justify-center">
+              <button
+                onClick={stopGeneration}
+                className="text-label-lg text-error hover:bg-error/5 border border-error/20 px-md py-xs rounded-xl flex items-center gap-xs transition-all active:scale-95 font-semibold"
+              >
+                <span className="material-symbols-outlined text-[16px]">stop</span> Stop Generation
+              </button>
+            </div>
+          )}
+
           {messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && !isGenerating && (
             <div className="px-xl pb-sm flex justify-end">
               <button
@@ -290,6 +336,12 @@ export default function ChatPage() {
             </div>
           </div>
         </div>
+      )}
+      {activeCitation && (
+        <PdfViewerModal
+          citation={activeCitation}
+          onClose={() => setActiveCitation(null)}
+        />
       )}
     </div>
   );

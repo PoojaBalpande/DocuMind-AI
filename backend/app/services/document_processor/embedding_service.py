@@ -2,9 +2,8 @@
 
 from sentence_transformers import SentenceTransformer
 
-# Load model globally once on startup to cache it and avoid reload overhead per request
 print("Initializing SentenceTransformer model 'BAAI/bge-small-en-v1.5' globally...")
-model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+model = SentenceTransformer("BAAI/bge-small-en-v1.5", local_files_only=True)
 
 
 def generate_embedding(text: str) -> list[float]:

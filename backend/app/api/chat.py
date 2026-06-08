@@ -99,6 +99,156 @@ def ask_question(
     )
 
 
+@router.post("/stream")
+def ask_question_stream(
+    data: ChatAskRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Ask a question grounded in the user's uploaded documents and stream the response."""
+    from fastapi.responses import StreamingResponse
+    import json
+    import requests
+    from app.core.config import settings
+    from app.models.chat import Message
+    from app.services.rag.retriever import retrieve_relevant_chunks
+    from app.services.rag.prompt_builder import build_context
+
+    # 1. Validate session ownership
+    session = (
+        db.query(ChatSession)
+        .filter(ChatSession.id == data.session_id, ChatSession.user_id == current_user.id)
+        .first()
+    )
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found",
+        )
+
+    # 2. Retrieve top chunks
+    chunks = retrieve_relevant_chunks(db, current_user.id, data.message, limit=2)
+
+    # 3. Format citations with snippet
+    sources = []
+    for chunk in chunks:
+        sources.append({
+            "document": chunk["document"],
+            "document_id": chunk["document_id"],
+            "page": chunk["page"],
+            "snippet": chunk["content"]
+        })
+
+    def event_generator():
+        # First send citations
+        yield f"data: {json.dumps({'type': 'citations', 'citations': sources})}\n\n"
+
+        if not chunks:
+            fallback_ans = "I could not find this information in the uploaded documents."
+            yield f"data: {json.dumps({'type': 'token', 'token': fallback_ans})}\n\n"
+            
+            # Store messages to DB
+            user_message = Message(
+                session_id=session.id,
+                role="user",
+                content=data.message,
+            )
+            db.add(user_message)
+            assistant_message = Message(
+                session_id=session.id,
+                role="assistant",
+                content=fallback_ans,
+                citations=[],
+            )
+            db.add(assistant_message)
+            db.commit()
+            return
+
+        # 4. Build Prompt Context
+        context = build_context(chunks)
+
+        # 5. Generate stream from Ollama
+        url = f"{settings.OLLAMA_BASE_URL}/api/chat"
+        system_prompt = """You are DocuMind AI.
+
+Answer only from the provided document context.
+
+If the answer is not present in the context, respond:
+
+"I could not find this information in the uploaded documents."
+
+Do not hallucinate.
+Do not use external knowledge."""
+
+        prompt = f"Context:\n{context}\n\nQuestion:\n{data.message}"
+        payload = {
+            "model": settings.OLLAMA_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            "stream": True,
+            "options": {
+                "temperature": 0.0
+            }
+        }
+
+        full_answer = ""
+        chunk_count = 0
+        try:
+            # Query Ollama model with stream=True
+            response = requests.post(url, json=payload, stream=True, timeout=300)
+            response.raise_for_status()
+            for line in response.iter_lines(chunk_size=1):
+                if line:
+                    chunk_data = json.loads(line.decode("utf-8"))
+                    token = chunk_data.get("message", {}).get("content", "")
+                    full_answer += token
+                    chunk_count += 1
+                    print(f"[BACKEND STREAM] Sent chunk #{chunk_count}: '{token}'")
+                    yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
+            print(f"[BACKEND STREAM] Stream finished. Total chunks sent: {chunk_count}")
+        except Exception as e:
+            print(f"[BACKEND STREAM] Primary model failed: {e}. Trying fallback model...")
+            # Try fallback model
+            payload["model"] = "qwen2.5-coder:7b"
+            fallback_chunk_count = 0
+            try:
+                response = requests.post(url, json=payload, stream=True, timeout=300)
+                response.raise_for_status()
+                for line in response.iter_lines(chunk_size=1):
+                    if line:
+                        chunk_data = json.loads(line.decode("utf-8"))
+                        token = chunk_data.get("message", {}).get("content", "")
+                        full_answer += token
+                        fallback_chunk_count += 1
+                        print(f"[BACKEND STREAM] Sent fallback chunk #{fallback_chunk_count}: '{token}'")
+                        yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
+                print(f"[BACKEND STREAM] Fallback stream finished. Total chunks sent: {fallback_chunk_count}")
+            except Exception as fallback_e:
+                print(f"[BACKEND STREAM] Fallback model failed: {fallback_e}")
+                yield f"data: {json.dumps({'type': 'token', 'token': 'Error: Failed to retrieve answer from local RAG engine.'})}\n\n"
+                return
+
+        # 6. Store completed conversation in DB
+        user_message = Message(
+            session_id=session.id,
+            role="user",
+            content=data.message,
+        )
+        db.add(user_message)
+        assistant_message = Message(
+            session_id=session.id,
+            role="assistant",
+            content=full_answer.strip(),
+            citations=sources,
+        )
+        db.add(assistant_message)
+        db.commit()
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
 @router.get("/sessions/{session_id}/messages", response_model=list[MessageResponse])
 def get_session_messages(
     session_id: str,

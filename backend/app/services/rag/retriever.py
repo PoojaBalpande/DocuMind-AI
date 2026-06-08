@@ -31,6 +31,7 @@ def retrieve_relevant_chunks(db: Session, user_id: str, question: str, limit: in
         chunks.append({
             "content": chunk.content,
             "page": chunk.page_number,
-            "document": original_filename
+            "document": original_filename,
+            "document_id": chunk.document_id
         })
     return chunks
