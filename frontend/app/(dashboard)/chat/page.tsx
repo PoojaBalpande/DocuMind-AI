@@ -29,7 +29,6 @@ export default function ChatPage() {
   
   const { documents, initDocuments } = useDocumentStore();
   const [input, setInput] = useState('');
-  const [loadingMsg, setLoadingMsg] = useState('Thinking...');
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -43,25 +42,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: isGenerating ? 'auto' : 'smooth' });
   }, [messages, isGenerating]);
 
-  // Loading text cycling effect
-  useEffect(() => {
-    if (isGenerating) {
-      const timeout = setTimeout(() => {
-        setLoadingMsg('Thinking...');
-      }, 0);
-      const interval = setInterval(() => {
-        setLoadingMsg((prev) => {
-          if (prev === 'Thinking...') return 'Analyzing documents...';
-          if (prev === 'Analyzing documents...') return 'Generating answer...';
-          return 'Generating answer...';
-        });
-      }, 1500);
-      return () => {
-        clearTimeout(timeout);
-        clearInterval(interval);
-      };
-    }
-  }, [isGenerating]);
+
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
@@ -268,36 +249,8 @@ export default function ChatPage() {
               </div>
             ))}
 
-            {/* Cycling Typing Indicator */}
-            {isGenerating && (
-              <div className="flex flex-col gap-xs max-w-[90%] ml-auto items-end">
-                <div className="bg-white border-l-4 border-secondary p-md rounded-2xl rounded-tr-none shadow-sm">
-                  <div className="flex items-center gap-sm">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-secondary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-secondary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-secondary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                    <span className="text-body-sm text-on-surface-variant font-semibold">{loadingMsg}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div ref={messagesEndRef} />
           </div>
-
-          {/* Stop Generation or Regenerate Controls */}
-          {isGenerating && (
-            <div className="px-xl pb-sm flex justify-center">
-              <button
-                onClick={stopGeneration}
-                className="text-label-lg text-error hover:bg-error/5 border border-error/20 px-md py-xs rounded-xl flex items-center gap-xs transition-all active:scale-95 font-semibold"
-              >
-                <span className="material-symbols-outlined text-[16px]">stop</span> Stop Generation
-              </button>
-            </div>
-          )}
 
           {messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && !isGenerating && (
             <div className="px-xl pb-sm flex justify-end">
@@ -326,11 +279,13 @@ export default function ChatPage() {
                   <span className="material-symbols-outlined">attach_file</span>
                 </button>
                 <button
-                  onClick={handleSend}
-                  disabled={isGenerating || !input.trim()}
+                  onClick={isGenerating ? stopGeneration : handleSend}
+                  disabled={!isGenerating && !input.trim()}
                   className="primary-gradient p-sm rounded-full text-on-primary disabled:opacity-40 transition-all hover:shadow-lg active:scale-90"
                 >
-                  <span className="material-symbols-outlined">send</span>
+                  <span className="material-symbols-outlined">
+                    {isGenerating ? 'stop' : 'send'}
+                  </span>
                 </button>
               </div>
             </div>
