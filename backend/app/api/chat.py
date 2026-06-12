@@ -1,5 +1,6 @@
 """Chat API endpoints — session management (no AI yet)."""
 
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
@@ -9,6 +10,7 @@ from app.models.user import User
 from app.models.chat import ChatSession, Message
 from app.schemas.chat import (
     ChatSessionCreate,
+    ChatSessionUpdate,
     ChatSessionResponse,
     ChatAskRequest,
     ChatAskResponse,
@@ -27,7 +29,7 @@ def list_sessions(
     """List all chat sessions for the authenticated user."""
     sessions = (
         db.query(ChatSession)
-        .filter(ChatSession.user_id == current_user.id)
+        .filter(ChatSession.user_id == current_user.id, ChatSession.is_deleted == False)
         .order_by(ChatSession.updated_at.desc())
         .all()
     )
@@ -58,10 +60,13 @@ def ask_question(
     db: Session = Depends(get_db),
 ):
     """Ask a question grounded in the user's uploaded documents."""
-    # 1. Validate session ownership
     session = (
         db.query(ChatSession)
-        .filter(ChatSession.id == data.session_id, ChatSession.user_id == current_user.id)
+        .filter(
+            ChatSession.id == data.session_id,
+            ChatSession.user_id == current_user.id,
+            ChatSession.is_deleted == False
+        )
         .first()
     )
     if not session:
@@ -69,6 +74,14 @@ def ask_question(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found",
         )
+
+    # Auto-generate title if it's currently "New Chat"
+    if session.title == "New Chat":
+        new_title = data.message.strip()
+        if len(new_title) > 40:
+            new_title = new_title[:37] + "..."
+        session.title = new_title
+    session.updated_at = datetime.now(timezone.utc)
 
     # 2. Run the RAG pipeline
     result = run_rag_pipeline(db, current_user.id, data.message)
@@ -114,10 +127,13 @@ def ask_question_stream(
     from app.services.rag.retriever import retrieve_relevant_chunks
     from app.services.rag.prompt_builder import build_context
 
-    # 1. Validate session ownership
     session = (
         db.query(ChatSession)
-        .filter(ChatSession.id == data.session_id, ChatSession.user_id == current_user.id)
+        .filter(
+            ChatSession.id == data.session_id,
+            ChatSession.user_id == current_user.id,
+            ChatSession.is_deleted == False
+        )
         .first()
     )
     if not session:
@@ -125,6 +141,14 @@ def ask_question_stream(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found",
         )
+
+    # Auto-generate title if it's currently "New Chat"
+    if session.title == "New Chat":
+        new_title = data.message.strip()
+        if len(new_title) > 40:
+            new_title = new_title[:37] + "..."
+        session.title = new_title
+    session.updated_at = datetime.now(timezone.utc)
 
     # 2. Retrieve top chunks
     chunks = retrieve_relevant_chunks(db, current_user.id, data.message, limit=2)
@@ -259,7 +283,11 @@ def get_session_messages(
     # 1. Validate session ownership
     session = (
         db.query(ChatSession)
-        .filter(ChatSession.id == session_id, ChatSession.user_id == current_user.id)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == current_user.id,
+            ChatSession.is_deleted == False
+        )
         .first()
     )
     if not session:
@@ -277,4 +305,60 @@ def get_session_messages(
     )
 
     return [MessageResponse.model_validate(m) for m in messages]
+
+
+@router.patch("/sessions/{session_id}", response_model=ChatSessionResponse)
+def update_session(
+    session_id: str,
+    data: ChatSessionUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update (rename) a chat session."""
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == current_user.id,
+            ChatSession.is_deleted == False
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found",
+        )
+    session.title = data.title
+    session.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(session)
+    return ChatSessionResponse.model_validate(session)
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session_endpoint(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Soft delete a chat session."""
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == current_user.id,
+            ChatSession.is_deleted == False
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found",
+        )
+    session.is_deleted = True
+    session.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return
 

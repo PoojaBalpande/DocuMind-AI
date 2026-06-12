@@ -98,4 +98,26 @@ export const chatService = {
     }
     return res.json();
   },
+
+  async renameSession(sessionId: string, title: string): Promise<ApiChatSession> {
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to rename session');
+    }
+    return res.json();
+  },
+
+  async deleteSession(sessionId: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to delete session');
+    }
+  },
 };

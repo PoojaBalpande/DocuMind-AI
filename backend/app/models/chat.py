@@ -27,6 +27,7 @@ class ChatSession(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    is_deleted: Mapped[bool] = mapped_column(default=False, server_default="false")
 
     # Relationships
     owner = relationship("User", back_populates="chat_sessions")

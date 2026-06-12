@@ -19,14 +19,17 @@ interface ChatState {
   activeSessionId: string | null;
   messages: Message[];
   isGenerating: boolean;
+  isLoadingSessions: boolean;
+  isLoadingMessages: boolean;
   abortController: AbortController | null;
-  setActiveSession: (id: string) => void;
+  setActiveSession: (id: string) => Promise<void>;
   createNewChat: (title?: string) => string;
   sendMessage: (content: string) => void;
   stopGeneration: () => void;
   regenerateLastResponse: () => void;
-  deleteSession: (id: string) => void;
-  initChat: () => void;
+  deleteSession: (id: string) => Promise<void>;
+  renameSession: (id: string, title: string) => Promise<void>;
+  initChat: () => Promise<void>;
 }
 
 /** Map backend ApiChatSession to frontend ChatSession type */
@@ -48,15 +51,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
   activeSessionId: null,
   messages: [],
   isGenerating: false,
+  isLoadingSessions: false,
+  isLoadingMessages: false,
   abortController: null,
 
   setActiveSession: async (id) => {
-    set({ activeSessionId: id, messages: [] });
+    set({ activeSessionId: id, messages: [], isLoadingMessages: true });
     try {
       const history = await chatService.getMessages(id);
       set({ messages: history });
     } catch (err) {
       console.error('Failed to load chat history:', err);
+    } finally {
+      set({ isLoadingMessages: false });
     }
   },
 
@@ -253,32 +260,61 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  deleteSession: (id) => {
+  deleteSession: async (id) => {
     set((state) => ({
       sessions: state.sessions.filter((s) => s.id !== id),
       activeSessionId: state.activeSessionId === id ? null : state.activeSessionId,
       messages: state.activeSessionId === id ? [] : state.messages,
     }));
+    try {
+      await chatService.deleteSession(id);
+    } catch (err) {
+      console.error('Failed to delete chat session:', err);
+      const { initChat } = get();
+      initChat();
+    }
+  },
+
+  renameSession: async (id, title) => {
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === id ? { ...s, title } : s
+      ),
+    }));
+    try {
+      await chatService.renameSession(id, title);
+    } catch (err) {
+      console.error('Failed to rename chat session:', err);
+      const { initChat } = get();
+      initChat();
+    }
   },
 
   initChat: async () => {
+    set({ isLoadingSessions: true });
     try {
       const apiSessions = await chatService.getSessions();
       const sessions = apiSessions.map(mapApiSession);
       set({ sessions });
       if (sessions.length > 0) {
         const firstSessionId = sessions[0].id;
-        set({ activeSessionId: firstSessionId, messages: [] });
+        set({ activeSessionId: firstSessionId, messages: [], isLoadingMessages: true });
         try {
           const history = await chatService.getMessages(firstSessionId);
           set({ messages: history });
         } catch (err) {
           console.error('Failed to load initial session messages:', err);
+        } finally {
+          set({ isLoadingMessages: false });
         }
+      } else {
+        set({ activeSessionId: null, messages: [] });
       }
     } catch (err) {
       console.error('Failed to load chat sessions:', err);
       set({ sessions: [] });
+    } finally {
+      set({ isLoadingSessions: false });
     }
   },
 }));
