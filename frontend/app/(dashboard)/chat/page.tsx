@@ -237,7 +237,7 @@ function ChatPageContent() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col bg-surface-container-lowest/50">
+        <div className="flex-1 min-w-0 flex flex-col bg-surface-container-lowest/50">
           {/* Chat Header */}
           <div className="h-14 border-b border-outline-variant/10 flex items-center justify-between px-xl gap-sm">
             <div className="flex items-center gap-md min-w-0">

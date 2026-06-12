@@ -12,6 +12,10 @@ interface CitationContextValue {
   availableCitations: Citation[];
   /** Whether the sidebar is visible */
   isSidebarOpen: boolean;
+  /** Whether the PDF viewer is open inside the sidebar */
+  isPdfOpen: boolean;
+  /** Set the PDF viewer open state */
+  setIsPdfOpen: (open: boolean) => void;
   /** Open sidebar with a citation; optionally pass the full citations array for navigation */
   openCitation: (citation: Citation, allCitations?: Citation[]) => void;
   /** Close the sidebar */
@@ -35,6 +39,7 @@ export function CitationProvider({ children }: { children: React.ReactNode }) {
   const [selectedCitationIndex, setSelectedCitationIndex] = useState(0);
   const [availableCitations, setAvailableCitations] = useState<Citation[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
 
   const openCitation = useCallback((citation: Citation, allCitations?: Citation[]) => {
@@ -51,6 +56,7 @@ export function CitationProvider({ children }: { children: React.ReactNode }) {
 
   const closeCitation = useCallback(() => {
     setIsSidebarOpen(false);
+    setIsPdfOpen(false);
     setTimeout(() => {
       triggerRef.current?.focus();
       triggerRef.current = null;
@@ -96,6 +102,8 @@ export function CitationProvider({ children }: { children: React.ReactNode }) {
         selectedCitationIndex,
         availableCitations,
         isSidebarOpen,
+        isPdfOpen,
+        setIsPdfOpen,
         openCitation,
         closeCitation,
         nextCitation,
