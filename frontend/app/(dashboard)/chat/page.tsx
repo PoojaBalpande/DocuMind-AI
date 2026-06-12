@@ -331,7 +331,7 @@ function ChatPageContent() {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            openCitation(cit);
+                            openCitation(cit, msg.citations);
                           }}
                           className="bg-white hover:bg-surface-container border border-outline-variant/20 rounded-xl p-sm flex flex-col items-start min-w-[180px] max-w-[280px] transition-all cursor-pointer shadow-sm active:scale-95 text-left gap-xs"
                         >

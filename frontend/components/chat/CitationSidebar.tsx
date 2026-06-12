@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCitation } from '@/contexts/CitationContext';
+import type { Citation } from '@/types';
 
 // ── Helpers ──────────────────────────────────────
 
@@ -29,14 +30,36 @@ function getRelevanceTier(score: number): { label: string; barColor: string; bgC
   return { label: 'Partially Relevant', barColor: 'bg-amber-500', bgColor: 'bg-amber-500/10' };
 }
 
+/** Generate a human-readable label for a citation */
+function getCitationLabel(cit: Citation, index: number): string {
+  const title = cit.documentTitle || 'Unknown';
+  const page = cit.pageNumber ? `Page ${cit.pageNumber}` : null;
+  if (title && page) return `${title} — ${page}`;
+  if (title) return title;
+  return `Citation #${index + 1}`;
+}
+
 // ── Component ────────────────────────────────────
 
 export default function CitationSidebar() {
-  const { selectedCitation, isSidebarOpen, closeCitation } = useCitation();
+  const {
+    selectedCitation,
+    selectedCitationIndex,
+    availableCitations,
+    isSidebarOpen,
+    closeCitation,
+    nextCitation,
+    previousCitation,
+    selectCitation,
+    hasNext,
+    hasPrevious,
+  } = useCitation();
+
   const sidebarRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [isSourceListOpen, setIsSourceListOpen] = useState(false);
 
-  // ESC key to close
+  // ESC key to close, arrow keys to navigate
   useEffect(() => {
     if (!isSidebarOpen) return;
 
@@ -44,10 +67,23 @@ export default function CitationSidebar() {
       if (e.key === 'Escape') {
         closeCitation();
       }
+      // Arrow key navigation when sidebar is focused
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        if (hasNext) {
+          e.preventDefault();
+          nextCitation();
+        }
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        if (hasPrevious) {
+          e.preventDefault();
+          previousCitation();
+        }
+      }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSidebarOpen, closeCitation]);
+  }, [isSidebarOpen, closeCitation, nextCitation, previousCitation, hasNext, hasPrevious]);
 
   // Focus close button when sidebar opens
   useEffect(() => {
@@ -59,7 +95,14 @@ export default function CitationSidebar() {
     }
   }, [isSidebarOpen]);
 
+  // Close source list when citation changes
+  useEffect(() => {
+    // Don't auto-close — keep list open if user wants to browse
+  }, [selectedCitationIndex]);
+
   const sourceInfo = selectedCitation ? getSourceIcon(selectedCitation.fileType) : null;
+  const totalCitations = availableCitations.length;
+  const hasMultipleCitations = totalCitations > 1;
 
   return (
     <>
@@ -134,207 +177,309 @@ export default function CitationSidebar() {
                 </div>
               </div>
             ) : (
-              /* ── Citation Card Content ── */
-              <div className="p-lg space-y-md animate-fade-in">
+              <div className="p-lg space-y-md">
 
-                {/* ━━ Source Type Badge ━━ */}
-                <div className="flex items-center gap-sm" role="region" aria-label="Source type">
-                  <div className={`flex items-center gap-xs px-md py-xs rounded-full border border-outline-variant/15 bg-surface-container text-label-md font-semibold ${sourceInfo?.color || 'text-secondary'}`}>
-                    <span className="material-symbols-outlined text-[16px]">{sourceInfo?.icon}</span>
-                    <span>{sourceInfo?.label}</span>
-                  </div>
-                  {selectedCitation.id && (
-                    <span className="text-[10px] text-on-surface-variant/40 font-mono tracking-tight">
-                      #{selectedCitation.id.slice(-6).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+                {/* ━━ Navigation Bar ━━ */}
+                {hasMultipleCitations && (
+                  <div
+                    className="flex items-center justify-between rounded-xl bg-surface-container border border-outline-variant/10 px-sm py-xs"
+                    role="navigation"
+                    aria-label="Citation navigation"
+                  >
+                    {/* Previous button */}
+                    <button
+                      onClick={previousCitation}
+                      disabled={!hasPrevious}
+                      className="flex items-center gap-xxs px-sm py-xs rounded-lg text-label-md font-semibold transition-all
+                        enabled:hover:bg-surface-variant/40 enabled:hover:text-primary enabled:active:scale-95
+                        disabled:opacity-30 disabled:cursor-not-allowed text-on-surface-variant"
+                      aria-label="Previous citation"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                      <span className="hidden sm:inline">Prev</span>
+                    </button>
 
-                {/* ━━ CARD 1: Document Information ━━ */}
-                <section
-                  className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
-                  role="region"
-                  aria-label="Document information"
-                >
-                  <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
-                    <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-[14px]">folder_open</span>
-                      Document Information
-                    </h4>
-                  </div>
-                  <div className="p-md space-y-sm">
-                    {/* Document name */}
-                    <div className="flex items-start gap-sm">
-                      <span className={`material-symbols-outlined text-[22px] mt-px shrink-0 ${sourceInfo?.color || 'text-secondary'}`}>
-                        {sourceInfo?.icon || 'description'}
+                    {/* Position indicator */}
+                    <div className="flex items-center gap-sm" aria-live="polite">
+                      <span className="text-label-md font-bold text-primary">
+                        Citation {selectedCitationIndex + 1}
                       </span>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-on-surface-variant/50 font-medium uppercase tracking-wider mb-xxs">Name</p>
-                        <p className="text-body-md font-semibold text-on-surface break-words leading-snug">
-                          {selectedCitation.documentTitle || 'Unknown Document'}
-                        </p>
-                      </div>
+                      <span className="text-label-md text-on-surface-variant/50">of</span>
+                      <span className="text-label-md font-bold text-on-surface-variant/70">
+                        {totalCitations}
+                      </span>
                     </div>
 
-                    <div className="border-t border-outline-variant/8" />
+                    {/* Next button */}
+                    <button
+                      onClick={nextCitation}
+                      disabled={!hasNext}
+                      className="flex items-center gap-xxs px-sm py-xs rounded-lg text-label-md font-semibold transition-all
+                        enabled:hover:bg-surface-variant/40 enabled:hover:text-primary enabled:active:scale-95
+                        disabled:opacity-30 disabled:cursor-not-allowed text-on-surface-variant"
+                      aria-label="Next citation"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                  </div>
+                )}
 
-                    {/* Document ID */}
-                    <div className="flex items-center gap-sm">
-                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40 shrink-0">fingerprint</span>
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-on-surface-variant/50 font-medium uppercase tracking-wider mb-xxs">Document ID</p>
-                        {selectedCitation.documentId ? (
-                          <p className="text-body-sm text-on-surface-variant font-mono text-[12px] truncate">
-                            {selectedCitation.documentId}
+                {/* ━━ Source List (collapsible) ━━ */}
+                {hasMultipleCitations && (
+                  <div className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white">
+                    <button
+                      onClick={() => setIsSourceListOpen(!isSourceListOpen)}
+                      className="w-full flex items-center justify-between px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                      aria-expanded={isSourceListOpen}
+                      aria-controls="citation-source-list"
+                    >
+                      <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[14px]">list_alt</span>
+                        Sources ({totalCitations})
+                      </h4>
+                      <span className={`material-symbols-outlined text-[18px] text-on-surface-variant/50 transition-transform duration-200 ${isSourceListOpen ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+
+                    {isSourceListOpen && (
+                      <nav
+                        id="citation-source-list"
+                        className="p-sm space-y-xxs max-h-[200px] overflow-y-auto custom-scrollbar"
+                        role="list"
+                        aria-label="Available citation sources"
+                      >
+                        {availableCitations.map((cit, idx) => {
+                          const isActive = idx === selectedCitationIndex;
+                          const label = getCitationLabel(cit, idx);
+                          return (
+                            <button
+                              key={cit.id}
+                              onClick={() => selectCitation(idx)}
+                              role="listitem"
+                              aria-current={isActive ? 'true' : undefined}
+                              className={`w-full flex items-center gap-sm px-sm py-sm rounded-xl text-left transition-all text-body-sm
+                                ${isActive
+                                  ? 'bg-secondary/10 text-secondary font-semibold border border-secondary/20'
+                                  : 'text-on-surface-variant hover:bg-surface-variant/30 border border-transparent'
+                                }`}
+                            >
+                              {/* Active indicator dot */}
+                              <span className={`w-2 h-2 rounded-full shrink-0 transition-colors ${isActive ? 'bg-secondary' : 'bg-outline-variant/30'}`} />
+
+                              {/* Label */}
+                              <span className="truncate flex-1">{label}</span>
+
+                              {/* Index chip */}
+                              <span className={`text-[10px] font-mono px-xs py-xxs rounded shrink-0 ${isActive ? 'bg-secondary/20 text-secondary' : 'bg-surface-variant/40 text-on-surface-variant/50'}`}>
+                                {idx + 1}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </nav>
+                    )}
+                  </div>
+                )}
+
+                {/* ━━ Citation Details (with key-based animation) ━━ */}
+                <div key={selectedCitation.id} className="space-y-md animate-fade-in">
+
+                  {/* ━━ Source Type Badge ━━ */}
+                  <div className="flex items-center gap-sm" role="region" aria-label="Source type">
+                    <div className={`flex items-center gap-xs px-md py-xs rounded-full border border-outline-variant/15 bg-surface-container text-label-md font-semibold ${sourceInfo?.color || 'text-secondary'}`}>
+                      <span className="material-symbols-outlined text-[16px]">{sourceInfo?.icon}</span>
+                      <span>{sourceInfo?.label}</span>
+                    </div>
+                    {selectedCitation.id && (
+                      <span className="text-[10px] text-on-surface-variant/40 font-mono tracking-tight">
+                        #{selectedCitation.id.slice(-6).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* ━━ CARD 1: Document Information ━━ */}
+                  <section
+                    className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
+                    role="region"
+                    aria-label="Document information"
+                  >
+                    <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
+                      <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[14px]">folder_open</span>
+                        Document Information
+                      </h4>
+                    </div>
+                    <div className="p-md space-y-sm">
+                      <div className="flex items-start gap-sm">
+                        <span className={`material-symbols-outlined text-[22px] mt-px shrink-0 ${sourceInfo?.color || 'text-secondary'}`}>
+                          {sourceInfo?.icon || 'description'}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-on-surface-variant/50 font-medium uppercase tracking-wider mb-xxs">Name</p>
+                          <p className="text-body-md font-semibold text-on-surface break-words leading-snug">
+                            {selectedCitation.documentTitle || 'Unknown Document'}
                           </p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-outline-variant/8" />
+
+                      <div className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40 shrink-0">fingerprint</span>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-on-surface-variant/50 font-medium uppercase tracking-wider mb-xxs">Document ID</p>
+                          {selectedCitation.documentId ? (
+                            <p className="text-body-sm text-on-surface-variant font-mono text-[12px] truncate">
+                              {selectedCitation.documentId}
+                            </p>
+                          ) : (
+                            <p className="text-body-sm text-on-surface-variant/40 italic">Not available</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ━━ CARD 2: Page Information ━━ */}
+                  <section
+                    className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
+                    role="region"
+                    aria-label="Page information"
+                  >
+                    <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
+                      <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[14px]">menu_book</span>
+                        Page Information
+                      </h4>
+                    </div>
+                    <div className="p-md">
+                      <div className="flex items-center gap-md">
+                        {selectedCitation.pageNumber ? (
+                          <>
+                            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                              <span className="text-headline-sm font-bold text-secondary">{selectedCitation.pageNumber}</span>
+                            </div>
+                            <div>
+                              <p className="text-body-md font-semibold text-on-surface">Page {selectedCitation.pageNumber}</p>
+                              <p className="text-[11px] text-on-surface-variant/50">Source location in document</p>
+                            </div>
+                          </>
                         ) : (
-                          <p className="text-body-sm text-on-surface-variant/40 italic">Not available</p>
+                          <>
+                            <div className="w-12 h-12 rounded-xl bg-surface-variant/30 flex items-center justify-center shrink-0">
+                              <span className="material-symbols-outlined text-[24px] text-on-surface-variant/30">help_outline</span>
+                            </div>
+                            <div>
+                              <p className="text-body-md text-on-surface-variant/60 italic">Page not available</p>
+                              <p className="text-[11px] text-on-surface-variant/40">Page information was not provided</p>
+                            </div>
+                          </>
                         )}
                       </div>
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                {/* ━━ CARD 2: Page Information ━━ */}
-                <section
-                  className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
-                  role="region"
-                  aria-label="Page information"
-                >
-                  <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
-                    <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-[14px]">menu_book</span>
-                      Page Information
-                    </h4>
-                  </div>
-                  <div className="p-md">
-                    <div className="flex items-center gap-md">
-                      {selectedCitation.pageNumber ? (
-                        <>
-                          <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                            <span className="text-headline-sm font-bold text-secondary">{selectedCitation.pageNumber}</span>
-                          </div>
-                          <div>
-                            <p className="text-body-md font-semibold text-on-surface">Page {selectedCitation.pageNumber}</p>
-                            <p className="text-[11px] text-on-surface-variant/50">Source location in document</p>
-                          </div>
-                        </>
+                  {/* ━━ CARD 3: Relevance Score ━━ */}
+                  <section
+                    className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
+                    role="region"
+                    aria-label="Relevance score"
+                  >
+                    <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
+                      <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[14px]">analytics</span>
+                        Source Relevance
+                      </h4>
+                    </div>
+                    <div className="p-md">
+                      {selectedCitation.relevanceScore != null ? (
+                        (() => {
+                          const pct = Math.round(selectedCitation.relevanceScore! * 100);
+                          const tier = getRelevanceTier(selectedCitation.relevanceScore!);
+                          return (
+                            <div className="space-y-sm">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-sm">
+                                  <span className={`inline-flex items-center gap-xs px-sm py-xxs rounded-full text-[11px] font-bold ${tier.bgColor}`}>
+                                    <span className="material-symbols-outlined text-[14px]">verified</span>
+                                    {tier.label}
+                                  </span>
+                                </div>
+                                <span className="text-headline-sm font-bold text-on-surface">{pct}%</span>
+                              </div>
+                              <div className="w-full bg-surface-dim/30 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`${tier.barColor} h-full rounded-full transition-all duration-700 ease-out`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()
                       ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-xl bg-surface-variant/30 flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-[24px] text-on-surface-variant/30">help_outline</span>
+                        <div className="flex items-center gap-sm py-xs">
+                          <div className="w-10 h-10 rounded-xl bg-surface-variant/30 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[20px] text-on-surface-variant/30">remove_circle_outline</span>
                           </div>
                           <div>
-                            <p className="text-body-md text-on-surface-variant/60 italic">Page not available</p>
-                            <p className="text-[11px] text-on-surface-variant/40">Page information was not provided</p>
+                            <p className="text-body-sm text-on-surface-variant/60 italic">Not available</p>
+                            <p className="text-[11px] text-on-surface-variant/40">Relevance score was not provided</p>
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                {/* ━━ CARD 3: Relevance Score ━━ */}
-                <section
-                  className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
-                  role="region"
-                  aria-label="Relevance score"
-                >
-                  <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
-                    <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-[14px]">analytics</span>
-                      Source Relevance
-                    </h4>
-                  </div>
-                  <div className="p-md">
-                    {selectedCitation.relevanceScore != null ? (
-                      (() => {
-                        const pct = Math.round(selectedCitation.relevanceScore! * 100);
-                        const tier = getRelevanceTier(selectedCitation.relevanceScore!);
-                        return (
-                          <div className="space-y-sm">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-sm">
-                                <span className={`inline-flex items-center gap-xs px-sm py-xxs rounded-full text-[11px] font-bold ${tier.bgColor}`}>
-                                  <span className="material-symbols-outlined text-[14px]">verified</span>
-                                  {tier.label}
-                                </span>
-                              </div>
-                              <span className="text-headline-sm font-bold text-on-surface">{pct}%</span>
-                            </div>
-                            <div className="w-full bg-surface-dim/30 h-2.5 rounded-full overflow-hidden">
-                              <div
-                                className={`${tier.barColor} h-full rounded-full transition-all duration-700 ease-out`}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })()
-                    ) : (
-                      <div className="flex items-center gap-sm py-xs">
-                        <div className="w-10 h-10 rounded-xl bg-surface-variant/30 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[20px] text-on-surface-variant/30">remove_circle_outline</span>
-                        </div>
-                        <div>
-                          <p className="text-body-sm text-on-surface-variant/60 italic">Not available</p>
-                          <p className="text-[11px] text-on-surface-variant/40">Relevance score was not provided</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                {/* ━━ CARD 4: Citation Preview ━━ */}
-                <section
-                  className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
-                  role="region"
-                  aria-label="Citation preview"
-                >
-                  <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
-                    <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-[14px]">format_quote</span>
-                      Citation Preview
-                    </h4>
-                  </div>
-                  <div className="p-md">
-                    {selectedCitation.excerpt ? (
-                      <div className="relative">
-                        {/* Decorative quote mark */}
-                        <span className="absolute -top-1 -left-0.5 text-[32px] leading-none text-secondary/15 font-serif select-none">&ldquo;</span>
-                        <blockquote className="pl-lg pr-sm pt-sm pb-sm border-l-3 border-secondary/30 bg-secondary/3 rounded-r-lg">
-                          <p className="text-body-sm text-on-surface leading-relaxed whitespace-pre-wrap break-words">
-                            {selectedCitation.excerpt}
-                          </p>
-                        </blockquote>
-                        {/* Source attribution */}
-                        <div className="flex items-center gap-xs mt-sm text-[11px] text-on-surface-variant/50">
-                          <span className="material-symbols-outlined text-[12px]">south_west</span>
-                          <span>
-                            Extracted from{' '}
-                            <span className="font-semibold text-on-surface-variant/70">
-                              {selectedCitation.documentTitle || 'source document'}
+                  {/* ━━ CARD 4: Citation Preview ━━ */}
+                  <section
+                    className="rounded-2xl border border-outline-variant/15 overflow-hidden bg-white"
+                    role="region"
+                    aria-label="Citation preview"
+                  >
+                    <div className="px-md py-sm bg-surface-container-low/60 border-b border-outline-variant/10">
+                      <h4 className="text-[11px] text-on-surface-variant/60 uppercase tracking-widest font-bold flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[14px]">format_quote</span>
+                        Citation Preview
+                      </h4>
+                    </div>
+                    <div className="p-md">
+                      {selectedCitation.excerpt ? (
+                        <div className="relative">
+                          <span className="absolute -top-1 -left-0.5 text-[32px] leading-none text-secondary/15 font-serif select-none">&ldquo;</span>
+                          <blockquote className="pl-lg pr-sm pt-sm pb-sm border-l-3 border-secondary/30 bg-secondary/3 rounded-r-lg">
+                            <p className="text-body-sm text-on-surface leading-relaxed whitespace-pre-wrap break-words">
+                              {selectedCitation.excerpt}
+                            </p>
+                          </blockquote>
+                          <div className="flex items-center gap-xs mt-sm text-[11px] text-on-surface-variant/50">
+                            <span className="material-symbols-outlined text-[12px]">south_west</span>
+                            <span>
+                              Extracted from{' '}
+                              <span className="font-semibold text-on-surface-variant/70">
+                                {selectedCitation.documentTitle || 'source document'}
+                              </span>
+                              {selectedCitation.pageNumber && (
+                                <>, page {selectedCitation.pageNumber}</>
+                              )}
                             </span>
-                            {selectedCitation.pageNumber && (
-                              <>, page {selectedCitation.pageNumber}</>
-                            )}
-                          </span>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-lg gap-sm text-center">
-                        <div className="w-12 h-12 rounded-xl bg-surface-variant/20 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[24px] text-on-surface-variant/25">text_snippet</span>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-lg gap-sm text-center">
+                          <div className="w-12 h-12 rounded-xl bg-surface-variant/20 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[24px] text-on-surface-variant/25">text_snippet</span>
+                          </div>
+                          <div>
+                            <p className="text-body-sm text-on-surface-variant/50 italic">Source unavailable</p>
+                            <p className="text-[11px] text-on-surface-variant/40 mt-xxs">No excerpt was provided for this citation</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-body-sm text-on-surface-variant/50 italic">Source unavailable</p>
-                          <p className="text-[11px] text-on-surface-variant/40 mt-xxs">No excerpt was provided for this citation</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
+                      )}
+                    </div>
+                  </section>
+                </div>
               </div>
             )}
           </div>
@@ -345,7 +490,15 @@ export default function CitationSidebar() {
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-on-surface-variant/50 flex items-center gap-xs">
                   <span className="material-symbols-outlined text-[14px]">keyboard</span>
-                  Press <kbd className="px-xs py-xxs bg-surface-variant/40 rounded text-[10px] font-mono mx-xxs">ESC</kbd> to close
+                  <kbd className="px-xs py-xxs bg-surface-variant/40 rounded text-[10px] font-mono">ESC</kbd>
+                  {hasMultipleCitations && (
+                    <>
+                      <span className="mx-xxs">·</span>
+                      <kbd className="px-xs py-xxs bg-surface-variant/40 rounded text-[10px] font-mono">←</kbd>
+                      <kbd className="px-xs py-xxs bg-surface-variant/40 rounded text-[10px] font-mono">→</kbd>
+                      <span className="hidden sm:inline ml-xxs">navigate</span>
+                    </>
+                  )}
                 </p>
                 <p className="text-[10px] text-on-surface-variant/35 font-mono">
                   {selectedCitation.id?.slice(-8).toUpperCase()}
