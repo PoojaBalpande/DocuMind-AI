@@ -2,18 +2,22 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import dynamic from 'next/dynamic';
 import { useChatStore } from '@/stores/chatStore';
 import { useDocumentStore } from '@/stores/documentStore';
 import { suggestedQuestions } from '@/lib/mockData';
-import type { Citation } from '@/types';
-
-const PdfViewerModal = dynamic(
-  () => import('@/components/chat/PdfViewerModal'),
-  { ssr: false }
-);
+import { CitationProvider, useCitation } from '@/contexts/CitationContext';
+import CitationSidebar from '@/components/chat/CitationSidebar';
 
 export default function ChatPage() {
+  return (
+    <CitationProvider>
+      <ChatPageContent />
+    </CitationProvider>
+  );
+}
+
+function ChatPageContent() {
+  const { openCitation } = useCitation();
   const {
     sessions,
     activeSessionId,
@@ -33,7 +37,7 @@ export default function ChatPage() {
 
   const { documents, initDocuments } = useDocumentStore();
   const [input, setInput] = useState('');
-  const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +102,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] relative overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] relative overflow-hidden" id="chat-page-root">
       {/* Mobile Drawer Overlay */}
       {isMobileSidebarOpen && (
         <div
@@ -327,7 +331,7 @@ export default function ChatPage() {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setActiveCitation(cit);
+                            openCitation(cit);
                           }}
                           className="bg-white hover:bg-surface-container border border-outline-variant/20 rounded-xl p-sm flex flex-col items-start min-w-[180px] max-w-[280px] transition-all cursor-pointer shadow-sm active:scale-95 text-left gap-xs"
                         >
@@ -413,12 +417,9 @@ export default function ChatPage() {
           </div>
         </div>
       )}
-      {activeCitation && (
-        <PdfViewerModal
-          citation={activeCitation}
-          onClose={() => setActiveCitation(null)}
-        />
-      )}
+
+      {/* Citation Sidebar — non-blocking, slides in from right */}
+      <CitationSidebar />
 
       {/* Delete Confirmation Modal */}
       {mounted && sessionToDelete && createPortal(
