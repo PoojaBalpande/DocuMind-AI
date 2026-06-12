@@ -428,18 +428,33 @@ function ChatPageContent() {
           <div className="absolute inset-0" onClick={() => setSessionToDelete(null)}></div>
 
           {/* Modal Container */}
-          <div className="bg-white rounded-3xl p-6 w-[600px] shadow-xl">
-            <h2 className="text-red-600 text-xl font-bold mb-4">
+          <div className="relative z-10 bg-white rounded-3xl p-6 w-[600px] max-w-[calc(100vw-32px)] shadow-xl">
+            <h2 className="text-error text-xl font-bold mb-4 flex items-center gap-sm">
+              <span className="material-symbols-outlined text-[24px]">delete_forever</span>
               Delete Chat?
             </h2>
 
-            <p className="mb-6">
-              Are you sure you want to delete this chat?
+            <p className="mb-6 text-on-surface-variant">
+              Are you sure you want to delete this chat? This action cannot be undone.
             </p>
 
             <div className="flex justify-end gap-3">
-              <button>Cancel</button>
-              <button>Delete</button>
+              <button
+                onClick={() => setSessionToDelete(null)}
+                className="px-lg py-sm rounded-xl text-on-surface-variant hover:bg-surface-variant/30 font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const id = sessionToDelete;
+                  setSessionToDelete(null);
+                  if (id) await deleteSession(id);
+                }}
+                className="px-lg py-sm rounded-xl bg-error text-on-error font-semibold hover:bg-error/90 transition-all active:scale-95"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>,
