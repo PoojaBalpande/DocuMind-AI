@@ -271,3 +271,12 @@ html {
 .citation-sidebar {
   will-change: transform, width, opacity;
 }
+
+/* ━━ Citation Highlights ━━ */
+.pdf-highlight-mark {
+  background-color: rgba(255, 221, 87, 0.35) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 1px rgba(255, 221, 87, 0.15) !important;
+  color: inherit !important;
+  padding: 1px 0 !important;
+}
