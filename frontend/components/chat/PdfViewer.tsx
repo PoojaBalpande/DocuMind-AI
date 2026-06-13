@@ -51,20 +51,48 @@ export default function PdfViewer({
   const [textLayerRenderCount, setTextLayerRenderCount] = useState<number>(0);
   const [highlightStatus, setHighlightStatus] = useState<'success' | 'failed' | null>(null);
 
-  // Authenticate and fetch PDF file from secure backend route
-  useEffect(() => {
+  // Track previous prop/state values to adjust other state variables during rendering
+  const [prevDocumentId, setPrevDocumentId] = useState<string>(documentId);
+  const [prevInitialPageNumber, setPrevInitialPageNumber] = useState<number>(initialPageNumber);
+  const [prevNumPages, setPrevNumPages] = useState<number | null>(null);
+  const [prevPageNumber, setPrevPageNumber] = useState<number>(pageNumber);
+  const [prevScale, setPrevScale] = useState<number>(scale);
+
+  // 1. If documentId changes, reset PDF state immediately during render
+  if (documentId !== prevDocumentId) {
+    setPrevDocumentId(documentId);
     if (!documentId) {
       setError('No document ID associated with this citation.');
       setLoading(false);
-      return;
+    } else {
+      setLoading(true);
+      setError(null);
+      setPdfBlobUrl(null);
+      setNumPages(null);
+      setTextLayerRenderCount(0);
+      setHighlightStatus(null);
     }
+  }
 
-    setLoading(true);
-    setError(null);
-    setPdfBlobUrl(null);
-    setNumPages(null);
+  // 2. Adjust pageNumber when initialPageNumber or numPages changes
+  if (initialPageNumber !== prevInitialPageNumber || numPages !== prevNumPages) {
+    setPrevInitialPageNumber(initialPageNumber);
+    setPrevNumPages(numPages);
+    const targetPage = initialPageNumber || 1;
+    setPageNumber(numPages && targetPage > numPages ? numPages : targetPage);
+  }
+
+  // 3. Reset highlighting render count and status when page, scale, or documentId changes
+  if (pageNumber !== prevPageNumber || scale !== prevScale || documentId !== prevDocumentId) {
+    setPrevPageNumber(pageNumber);
+    setPrevScale(scale);
     setTextLayerRenderCount(0);
     setHighlightStatus(null);
+  }
+
+  // Authenticate and fetch PDF file from secure backend route
+  useEffect(() => {
+    if (!documentId) return;
 
     const token = authService.getToken();
     let createdUrl: string | null = null;
@@ -97,24 +125,6 @@ export default function PdfViewer({
       }
     };
   }, [documentId]);
-
-  // Synchronize with initialPageNumber changes (e.g. when changing citations)
-  useEffect(() => {
-    if (initialPageNumber) {
-      setPageNumber((prev) => {
-        if (numPages && initialPageNumber > numPages) {
-          return numPages;
-        }
-        return initialPageNumber;
-      });
-    }
-  }, [initialPageNumber, numPages]);
-
-  // Reset rendering and highlight states when page, scale, or document changes
-  useEffect(() => {
-    setTextLayerRenderCount(0);
-    setHighlightStatus(null);
-  }, [pageNumber, scale, documentId]);
 
   // Highlight execution lifecycle (runs after text layer is fully built)
   useEffect(() => {
