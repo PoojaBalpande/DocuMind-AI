@@ -1,4 +1,8 @@
-"""Chat schemas — Pydantic v2 request/response models."""
+"""Chat schemas — Pydantic v2 request/response models.
+
+V8: ChatAskRequest adds optional document_id for retrieval mode control.
+ChatAskSource enriched with document_id, chunk_id, snippet, similarity_score.
+"""
 
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -36,14 +40,18 @@ class MessageResponse(BaseModel):
 class ChatAskRequest(BaseModel):
     session_id: str
     message: str
+    document_id: str | None = None  # V8: None = multi-doc, str = single-doc
 
 
 class ChatAskSource(BaseModel):
     document: str
+    document_id: str | None = None      # V8: source document UUID
     page: int | None = None
+    chunk_id: str | None = None         # V8: chunk UUID for traceability
+    snippet: str | None = None          # V8: chunk text excerpt
+    similarity_score: float | None = None  # V8: 0-1 relevance score
 
 
 class ChatAskResponse(BaseModel):
     answer: str
     sources: list[ChatAskSource]
-

@@ -76,11 +76,12 @@ export interface Message {
 export interface Citation {
   id: string;
   messageId: string;
+  chunkId?: string;           // V8: chunk UUID for traceability
   documentId?: string;
   documentTitle: string;
   pageNumber?: number;
   excerpt?: string;
-  relevanceScore?: number;
+  relevanceScore?: number;    // V8: now populated from similarity_score
   fileType?: 'pdf' | 'docx' | 'txt' | 'md';
 }
 

@@ -83,8 +83,8 @@ def ask_question(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # 2. Run the RAG pipeline
-    result = run_rag_pipeline(db, current_user.id, data.message)
+    # 2. Run the RAG pipeline (V8: pass document_id for retrieval mode control)
+    result = run_rag_pipeline(db, current_user.id, data.message, document_id=data.document_id)
 
     # 3. Store the user's query
     user_message = Message(
@@ -150,17 +150,22 @@ def ask_question_stream(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # 2. Retrieve top chunks
-    chunks = retrieve_relevant_chunks(db, current_user.id, data.message, limit=2)
+    # 2. Retrieve top chunks (V8: multi-doc uses higher limit)
+    limit = 5 if data.document_id is None else 2
+    chunks = retrieve_relevant_chunks(
+        db, current_user.id, data.message, limit=limit, document_id=data.document_id
+    )
 
-    # 3. Format citations with snippet
+    # 3. Format citations with enriched metadata (V8: chunk_id + similarity_score)
     sources = []
     for chunk in chunks:
         sources.append({
             "document": chunk["document"],
             "document_id": chunk["document_id"],
             "page": chunk["page"],
-            "snippet": chunk["content"]
+            "snippet": chunk["content"],
+            "chunk_id": chunk.get("chunk_id"),
+            "similarity_score": chunk.get("similarity_score"),
         })
 
     def event_generator():

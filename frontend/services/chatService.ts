@@ -27,6 +27,8 @@ export interface ApiCitation {
   document_id: string;
   page: number | null;
   snippet?: string;
+  chunk_id?: string;           // V8: chunk UUID
+  similarity_score?: number;   // V8: 0-1 relevance score
 }
 
 export interface ApiMessage {
@@ -77,16 +79,18 @@ export const chatService = {
       citations: msg.citations ? msg.citations.map((cit: ApiCitation, idx: number) => ({
         id: `cit_${msg.id}_${idx}`,
         messageId: msg.id,
+        chunkId: cit.chunk_id,
         documentId: cit.document_id,
         documentTitle: cit.document,
         pageNumber: cit.page ?? undefined,
         excerpt: cit.snippet,
+        relevanceScore: cit.similarity_score,
       })) : [],
       createdAt: msg.created_at,
     }));
   },
 
-  async sendMessage(sessionId: string, content: string): Promise<{ answer: string; sources: { document: string; page: number | null }[] }> {
+  async sendMessage(sessionId: string, content: string): Promise<{ answer: string; sources: ApiCitation[] }> {
     const res = await fetch(`${API_BASE}/api/chat/ask`, {
       method: 'POST',
       headers: authHeaders(),

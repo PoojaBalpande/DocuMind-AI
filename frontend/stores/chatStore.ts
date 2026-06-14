@@ -46,6 +46,28 @@ function mapApiSession(api: ApiChatSession): ChatSession {
   };
 }
 
+/**
+ * Map a backend ApiCitation to a frontend Citation.
+ * Shared by: sendMessage (stream), regenerateLastResponse, and getMessages (via chatService).
+ * Centralizes all V8 metadata mapping (chunkId, documentId, relevanceScore, excerpt).
+ */
+function mapApiCitationToCitation(
+  cit: ApiCitation,
+  messageId: string,
+  index: number,
+): Citation {
+  return {
+    id: `cit_${messageId}_${index}`,
+    messageId,
+    chunkId: cit.chunk_id,
+    documentId: cit.document_id,
+    documentTitle: cit.document,
+    pageNumber: cit.page ?? undefined,
+    excerpt: cit.snippet,
+    relevanceScore: cit.similarity_score,
+  };
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
   activeSessionId: null,
@@ -168,14 +190,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.type === 'citations') {
-                citations = parsed.citations.map((cit: ApiCitation, idx: number) => ({
-                  id: `cit_${aiMsgId}_${idx}`,
-                  messageId: aiMsgId,
-                  documentId: cit.document_id,
-                  documentTitle: cit.document,
-                  pageNumber: cit.page ?? undefined,
-                  excerpt: cit.snippet,
-                }));
+                citations = parsed.citations.map((cit: ApiCitation, idx: number) =>
+                  mapApiCitationToCitation(cit, aiMsgId, idx)
+                );
               } else if (parsed.type === 'token') {
                 accumulatedContent += parsed.token;
                 chunkCount++;
@@ -240,17 +257,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     try {
       const result = await chatService.sendMessage(activeSessionId, lastUserMsg.content);
+      const aiMessageId = 'msg_ai_' + Date.now();
       const aiMsg: Message = {
-        id: 'msg_ai_' + Date.now(),
+        id: aiMessageId,
         sessionId: activeSessionId,
         role: 'assistant',
         content: result.answer,
-        citations: result.sources.map((src, idx) => ({
-          id: `cit_${Date.now()}_${idx}`,
-          messageId: 'msg_ai_' + Date.now(),
-          documentTitle: src.document,
-          pageNumber: src.page || undefined,
-        })),
+        citations: result.sources.map((src: ApiCitation, idx: number) =>
+          mapApiCitationToCitation(src, aiMessageId, idx)
+        ),
         createdAt: new Date().toISOString(),
       };
       set((state) => ({ messages: [...state.messages, aiMsg], isGenerating: false }));
