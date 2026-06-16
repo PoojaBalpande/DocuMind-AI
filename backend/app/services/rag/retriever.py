@@ -17,7 +17,7 @@ def retrieve_relevant_chunks(
     user_id: str,
     question: str,
     limit: int = 5,
-    document_id: str | None = None,
+    document_ids: list[str] | None = None,
 ) -> list[dict]:
     """Retrieve top N relevant chunks for the user's question.
 
@@ -26,9 +26,8 @@ def retrieve_relevant_chunks(
         user_id: Authenticated user's ID — used to scope all queries.
         question: The user's natural-language question.
         limit: Maximum number of chunks to return.
-        document_id: Optional. When provided, restricts retrieval to a single
-            document (backward-compatible single-doc mode). When None, searches
-            across all of the user's documents (multi-doc mode).
+        document_ids: Optional. When provided, restricts retrieval to the specified
+            documents. When None, searches across all of the user's documents.
 
     Returns:
         List of dicts with enriched metadata::
@@ -59,9 +58,9 @@ def retrieve_relevant_chunks(
         .filter(Document.user_id == user_id)
     )
 
-    # Step 4: Optionally filter to a single document
-    if document_id is not None:
-        query = query.filter(DocumentChunk.document_id == document_id)
+    # Step 4: Optionally filter to specific documents
+    if document_ids is not None:
+        query = query.filter(DocumentChunk.document_id.in_(document_ids))
 
     # Step 5: Order by similarity and limit
     results = (

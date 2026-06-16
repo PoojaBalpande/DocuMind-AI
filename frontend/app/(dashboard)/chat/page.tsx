@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { useChatStore } from '@/stores/chatStore';
 import { useDocumentStore } from '@/stores/documentStore';
@@ -10,9 +11,21 @@ import CitationSidebar from '@/components/chat/CitationSidebar';
 
 export default function ChatPage() {
   return (
-    <CitationProvider>
-      <ChatPageContent />
-    </CitationProvider>
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="flex items-center gap-sm">
+          <svg className="animate-spin h-5 w-5 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-on-surface-variant font-medium">Loading chat interface...</span>
+        </div>
+      </div>
+    }>
+      <CitationProvider>
+        <ChatPageContent />
+      </CitationProvider>
+    </Suspense>
   );
 }
 
@@ -25,6 +38,12 @@ function ChatPageContent() {
     isGenerating,
     isLoadingSessions,
     isLoadingMessages,
+    retrievalScope,
+    selectedDocumentIds,
+    activeDocumentId,
+    setRetrievalScope,
+    setSelectedDocuments,
+    setActiveDocumentId,
     setActiveSession,
     createNewChat,
     sendMessage,
@@ -37,6 +56,24 @@ function ChatPageContent() {
 
   const { documents, initDocuments } = useDocumentStore();
   const [input, setInput] = useState('');
+
+  const searchParams = useSearchParams();
+  const docIdParam = searchParams.get('documentId');
+
+  useEffect(() => {
+    if (!isLoadingSessions && docIdParam) {
+      setRetrievalScope('current');
+      setActiveDocumentId(docIdParam);
+    }
+  }, [docIdParam, isLoadingSessions, setRetrievalScope, setActiveDocumentId]);
+
+  // Set default active document if none set
+  useEffect(() => {
+    const readyDocs = documents.filter((d) => d.status === 'ready');
+    if (retrievalScope === 'current' && !activeDocumentId && readyDocs.length > 0) {
+      setActiveDocumentId(readyDocs[0].id);
+    }
+  }, [retrievalScope, activeDocumentId, documents, setActiveDocumentId]);
 
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,6 +126,16 @@ function ChatPageContent() {
 
   const handleSend = () => {
     if (!input.trim() || isGenerating) return;
+
+    if (retrievalScope === 'selected' && selectedDocumentIds.length === 0) {
+      alert('Select at least one document.');
+      return;
+    }
+    if (retrievalScope === 'current' && !activeDocumentId) {
+      alert('Please select an active document.');
+      return;
+    }
+
     if (!activeSessionId) createNewChat();
     sendMessage(input.trim());
     setInput('');
@@ -390,6 +437,119 @@ function ChatPageContent() {
 
           {/* Input Bar */}
           <div className="p-xl border-t border-outline-variant/10">
+            {/* Retrieval Scope UI */}
+            <div className="flex flex-col gap-sm max-w-[900px] mx-auto mb-sm">
+              <div className="flex items-center justify-between flex-wrap gap-sm">
+                <div className="flex bg-surface-container-low p-xs rounded-xl border border-outline-variant/20 shadow-sm">
+                  <button
+                    onClick={() => setRetrievalScope('workspace')}
+                    className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'workspace'
+                        ? 'bg-secondary text-on-secondary shadow-sm'
+                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      }`}
+                  >
+                    Entire Workspace
+                  </button>
+                  <button
+                    onClick={() => setRetrievalScope('current')}
+                    className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'current'
+                        ? 'bg-secondary text-on-secondary shadow-sm'
+                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      }`}
+                  >
+                    Current Document
+                  </button>
+                  <button
+                    onClick={() => setRetrievalScope('selected')}
+                    className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'selected'
+                        ? 'bg-secondary text-on-secondary shadow-sm'
+                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      }`}
+                  >
+                    Selected Documents
+                  </button>
+                </div>
+
+                {/* If retrievalScope === 'current', show single document selector */}
+                {retrievalScope === 'current' && (
+                  <div className="flex items-center gap-sm animate-fade-in">
+                    <span className="text-body-xs font-semibold text-on-surface-variant">Active Document:</span>
+                    <select
+                      value={activeDocumentId || ''}
+                      onChange={(e) => setActiveDocumentId(e.target.value || null)}
+                      className="bg-white border border-outline-variant/30 rounded-lg px-md py-xs text-body-xs font-semibold focus:outline-none focus:ring-1 focus:ring-secondary min-w-[200px] max-w-[300px] shadow-sm cursor-pointer"
+                    >
+                      <option value="">Select a document...</option>
+                      {documents.filter((d) => d.status === 'ready').map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.fileName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* If retrievalScope === 'selected', show checkbox selector with multi-select */}
+              {retrievalScope === 'selected' && (
+                <div className="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-md shadow-inner animate-fade-in">
+                  <div className="flex items-center justify-between mb-sm border-b border-outline-variant/10 pb-xs">
+                    <span className="text-label-md font-bold text-primary">Select Documents to Search:</span>
+                    <div className="flex gap-xs">
+                      <button
+                        onClick={() => setSelectedDocuments(documents.filter((d) => d.status === 'ready').map((d) => d.id))}
+                        className="text-body-xs text-secondary hover:underline font-semibold"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-on-surface-variant/30">•</span>
+                      <button
+                        onClick={() => setSelectedDocuments([])}
+                        className="text-body-xs text-secondary hover:underline font-semibold"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-sm max-h-[150px] overflow-y-auto custom-scrollbar p-xs">
+                    {documents.filter((d) => d.status === 'ready').map((doc) => {
+                      const isSelected = selectedDocumentIds.includes(doc.id);
+                      return (
+                        <label
+                          key={doc.id}
+                          className={`flex items-center gap-sm p-sm rounded-xl border cursor-pointer select-none transition-all ${isSelected
+                              ? 'bg-secondary/10 border-secondary/40 text-secondary'
+                              : 'bg-white border-outline-variant/20 text-on-surface-variant hover:bg-surface-variant/10'
+                            }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              if (isSelected) {
+                                setSelectedDocuments(selectedDocumentIds.filter((id) => id !== doc.id));
+                              } else {
+                                setSelectedDocuments([...selectedDocumentIds, doc.id]);
+                              }
+                            }}
+                            className="rounded text-secondary focus:ring-secondary border-outline-variant/30 shrink-0 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-body-xs font-semibold truncate flex-1" title={doc.fileName}>
+                            {doc.fileName}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {documents.filter((d) => d.status === 'ready').length === 0 && (
+                      <div className="col-span-full py-md text-center text-on-surface-variant text-body-xs italic">
+                        No processed documents available in workspace.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="relative max-w-[900px] mx-auto">
               <input
                 value={input}
@@ -405,7 +565,11 @@ function ChatPageContent() {
                 </button>
                 <button
                   onClick={isGenerating ? stopGeneration : handleSend}
-                  disabled={!isGenerating && !input.trim()}
+                  disabled={
+                    (!isGenerating && !input.trim()) ||
+                    (!isGenerating && retrievalScope === 'selected' && selectedDocumentIds.length === 0) ||
+                    (!isGenerating && retrievalScope === 'current' && !activeDocumentId)
+                  }
                   className="primary-gradient p-sm rounded-full text-on-primary disabled:opacity-40 transition-all hover:shadow-lg active:scale-90"
                 >
                   <span className="material-symbols-outlined">

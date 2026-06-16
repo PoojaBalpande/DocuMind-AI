@@ -17,7 +17,7 @@ def run_rag_pipeline(
     db: Session,
     user_id: str,
     question: str,
-    document_id: str | None = None,
+    document_ids: list[str] | None = None,
 ) -> dict:
     """Run similarity search and LLM completion to answer a question grounded in user docs.
 
@@ -25,8 +25,8 @@ def run_rag_pipeline(
         db: SQLAlchemy session.
         user_id: Authenticated user's ID.
         question: The user's natural-language question.
-        document_id: Optional. When None, retrieves across all user documents
-            (multi-doc mode). When a string, restricts to that single document.
+        document_ids: Optional. When None, retrieves across all user documents.
+            When a list of document IDs, restricts search to those documents.
 
     Returns:
         Dict::
@@ -44,9 +44,9 @@ def run_rag_pipeline(
             }
     """
     # 1. Retrieve top chunks (5 for multi-doc breadth, 2 for single-doc focus)
-    limit = 5 if document_id is None else 2
+    limit = 5 if (document_ids is None or len(document_ids) > 1) else 2
     chunks = retrieve_relevant_chunks(
-        db, user_id, question, limit=limit, document_id=document_id
+        db, user_id, question, limit=limit, document_ids=document_ids
     )
 
     logger.info(f"RETRIEVAL PIPELINE: Retrieved {len(chunks)} chunks for user_id: {user_id}")

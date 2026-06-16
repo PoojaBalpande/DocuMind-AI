@@ -136,6 +136,70 @@ def test_retriever_similarity_search(mock_embed, test_user, db):
         db.commit()
 
 
+# 2b. Test Scoped Retrieval with document_ids
+@patch("app.services.rag.retriever.generate_embedding")
+def test_retriever_scoped_similarity_search(mock_embed, test_user, db):
+    mock_embed.return_value = [0.1] * 384
+
+    # Create 2 documents
+    doc1 = Document(
+        user_id=test_user.id,
+        filename="scoped_test_1.pdf",
+        original_filename="scoped_test_1.pdf",
+        file_size=512,
+        storage_path="scoped_test_1.pdf",
+        status="ready"
+    )
+    doc2 = Document(
+        user_id=test_user.id,
+        filename="scoped_test_2.pdf",
+        original_filename="scoped_test_2.pdf",
+        file_size=512,
+        storage_path="scoped_test_2.pdf",
+        status="ready"
+    )
+    db.add(doc1)
+    db.add(doc2)
+    db.commit()
+    db.refresh(doc1)
+    db.refresh(doc2)
+
+    try:
+        chunk1 = DocumentChunk(
+            document_id=doc1.id,
+            chunk_index=0,
+            content="This matches in document 1.",
+            embedding=[0.1] * 384,
+            page_number=1
+        )
+        chunk2 = DocumentChunk(
+            document_id=doc2.id,
+            chunk_index=0,
+            content="This matches in document 2.",
+            embedding=[0.1] * 384,
+            page_number=1
+        )
+        db.add(chunk1)
+        db.add(chunk2)
+        db.commit()
+
+        # Scoped retrieval to only doc1
+        results = retrieve_relevant_chunks(db, test_user.id, "query", limit=5, document_ids=[doc1.id])
+        assert len(results) == 1
+        assert results[0]["content"] == "This matches in document 1."
+        assert results[0]["document_id"] == doc1.id
+
+        # Scoped retrieval to both doc1 and doc2
+        results_both = retrieve_relevant_chunks(db, test_user.id, "query", limit=5, document_ids=[doc1.id, doc2.id])
+        assert len(results_both) == 2
+        doc_ids_returned = {r["document_id"] for r in results_both}
+        assert doc_ids_returned == {doc1.id, doc2.id}
+    finally:
+        db.delete(doc1)
+        db.delete(doc2)
+        db.commit()
+
+
 # 3. Test RAG Pipeline end-to-end
 @patch("app.services.rag.retriever.generate_embedding")
 @patch("app.services.rag.llm_service.requests.post")

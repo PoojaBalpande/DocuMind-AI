@@ -22,6 +22,12 @@ interface ChatState {
   isLoadingSessions: boolean;
   isLoadingMessages: boolean;
   abortController: AbortController | null;
+  retrievalScope: 'workspace' | 'current' | 'selected';
+  selectedDocumentIds: string[];
+  activeDocumentId: string | null;
+  setRetrievalScope: (scope: 'workspace' | 'current' | 'selected') => void;
+  setSelectedDocuments: (ids: string[]) => void;
+  setActiveDocumentId: (id: string | null) => void;
   setActiveSession: (id: string) => Promise<void>;
   createNewChat: (title?: string) => string;
   sendMessage: (content: string) => void;
@@ -76,9 +82,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingSessions: false,
   isLoadingMessages: false,
   abortController: null,
+  retrievalScope: 'workspace',
+  selectedDocumentIds: [],
+  activeDocumentId: null,
+
+  setRetrievalScope: (scope) => set({ retrievalScope: scope }),
+  setSelectedDocuments: (ids) => set({ selectedDocumentIds: ids }),
+  setActiveDocumentId: (id) => set({ activeDocumentId: id }),
 
   setActiveSession: async (id) => {
-    set({ activeSessionId: id, messages: [], isLoadingMessages: true });
+    set({
+      activeSessionId: id,
+      messages: [],
+      isLoadingMessages: true,
+      retrievalScope: 'workspace',
+      selectedDocumentIds: [],
+      activeDocumentId: null,
+    });
     try {
       const history = await chatService.getMessages(id);
       set({ messages: history });
@@ -105,6 +125,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       sessions: [tempSession, ...state.sessions],
       activeSessionId: tempId,
       messages: [],
+      retrievalScope: 'workspace',
+      selectedDocumentIds: [],
+      activeDocumentId: null,
     }));
 
     // Create session in backend (async, update ID when done)
@@ -154,10 +177,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
+      const { retrievalScope, selectedDocumentIds, activeDocumentId } = get();
+      let documentIds: string[] | undefined = undefined;
+      if (retrievalScope === 'current') {
+        documentIds = activeDocumentId ? [activeDocumentId] : [];
+      } else if (retrievalScope === 'selected') {
+        documentIds = selectedDocumentIds;
+      }
+
+      const bodyPayload: Record<string, any> = {
+        session_id: activeSessionId,
+        message: content,
+      };
+      if (documentIds !== undefined) {
+        bodyPayload.document_ids = documentIds;
+      }
+
       const response = await fetch(`${API_BASE}/api/chat/stream`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ session_id: activeSessionId, message: content }),
+        body: JSON.stringify(bodyPayload),
         signal: abortController.signal,
       });
 
@@ -256,7 +295,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ messages: updated, isGenerating: true });
 
     try {
-      const result = await chatService.sendMessage(activeSessionId, lastUserMsg.content);
+      const { retrievalScope, selectedDocumentIds, activeDocumentId } = get();
+      let documentIds: string[] | undefined = undefined;
+      if (retrievalScope === 'current') {
+        documentIds = activeDocumentId ? [activeDocumentId] : [];
+      } else if (retrievalScope === 'selected') {
+        documentIds = selectedDocumentIds;
+      }
+
+      const result = await chatService.sendMessage(activeSessionId, lastUserMsg.content, documentIds);
       const aiMessageId = 'msg_ai_' + Date.now();
       const aiMsg: Message = {
         id: aiMessageId,
@@ -313,7 +360,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ sessions });
       if (sessions.length > 0) {
         const firstSessionId = sessions[0].id;
-        set({ activeSessionId: firstSessionId, messages: [], isLoadingMessages: true });
+        set({
+          activeSessionId: firstSessionId,
+          messages: [],
+          isLoadingMessages: true,
+          retrievalScope: 'workspace',
+          selectedDocumentIds: [],
+          activeDocumentId: null,
+        });
         try {
           const history = await chatService.getMessages(firstSessionId);
           set({ messages: history });
@@ -323,7 +377,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           set({ isLoadingMessages: false });
         }
       } else {
-        set({ activeSessionId: null, messages: [] });
+        set({
+          activeSessionId: null,
+          messages: [],
+          retrievalScope: 'workspace',
+          selectedDocumentIds: [],
+          activeDocumentId: null,
+        });
       }
     } catch (err) {
       console.error('Failed to load chat sessions:', err);

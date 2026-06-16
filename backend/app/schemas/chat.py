@@ -41,6 +41,7 @@ class ChatAskRequest(BaseModel):
     session_id: str
     message: str
     document_id: str | None = None  # V8: None = multi-doc, str = single-doc
+    document_ids: list[str] | None = None  # V8 Phase 2: list of document IDs for scope filtering
 
 
 class ChatAskSource(BaseModel):

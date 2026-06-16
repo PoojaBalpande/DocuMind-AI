@@ -19,8 +19,11 @@ def answer_question(question: str, context: str) -> str:
 
 Answer only from the provided document context.
 
-If the answer is not present in the context, respond:
+If the user asks for a summary, comparison, or synthesis of the documents (e.g. similarities or differences):
+- Answer by synthesizing, comparing, or contrasting the facts and evidence present in the retrieved chunks.
+- You are allowed and encouraged to infer similarities and differences from the retrieved evidence, even if they are not stated verbatim in a single sentence.
 
+If the context does not contain enough information to address the question, or if you cannot answer the question or infer comparisons from the provided chunks, respond:
 "I could not find this information in the uploaded documents."
 
 Do not hallucinate.

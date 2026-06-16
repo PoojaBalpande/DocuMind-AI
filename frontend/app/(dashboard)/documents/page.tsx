@@ -160,9 +160,9 @@ export default function DocumentsPage() {
                     <td className="py-lg px-lg text-body-sm text-on-surface-variant hidden lg:table-cell">{formatDate(doc.createdAt)}</td>
                     <td className="py-lg px-lg">
                       <div className="flex gap-xs">
-                        <button className="text-on-surface-variant hover:text-secondary transition-colors" title="Chat with document">
+                        <a href={`/chat?documentId=${doc.id}`} className="text-on-surface-variant hover:text-secondary transition-colors" title="Chat with document">
                           <span className="material-symbols-outlined text-[18px]">forum</span>
-                        </button>
+                        </a>
                         <button onClick={() => deleteDocument(doc.id)} className="text-on-surface-variant hover:text-error transition-colors" title="Delete">
                           <span className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
@@ -198,9 +198,9 @@ export default function DocumentsPage() {
                   ))}
                 </div>
                 <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="flex-1 bg-secondary/10 text-secondary py-xs rounded-lg text-label-lg font-semibold hover:bg-secondary/20 transition-colors flex items-center justify-center gap-xs">
+                  <a href={`/chat?documentId=${doc.id}`} className="flex-1 bg-secondary/10 text-secondary py-xs rounded-lg text-label-lg font-semibold hover:bg-secondary/20 transition-colors flex items-center justify-center gap-xs">
                     <span className="material-symbols-outlined text-[16px]">forum</span>Chat
-                  </button>
+                  </a>
                   <button onClick={() => deleteDocument(doc.id)} className="bg-error/10 text-error py-xs px-md rounded-lg hover:bg-error/20 transition-colors">
                     <span className="material-symbols-outlined text-[16px]">delete</span>
                   </button>

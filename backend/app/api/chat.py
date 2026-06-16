@@ -83,8 +83,13 @@ def ask_question(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # 2. Run the RAG pipeline (V8: pass document_id for retrieval mode control)
-    result = run_rag_pipeline(db, current_user.id, data.message, document_id=data.document_id)
+    # Resolve document_ids (supporting both singular and plural for backward compatibility)
+    doc_ids = data.document_ids
+    if doc_ids is None and data.document_id is not None:
+        doc_ids = [data.document_id]
+
+    # 2. Run the RAG pipeline (V8 Phase 2: pass document_ids list for retrieval mode control)
+    result = run_rag_pipeline(db, current_user.id, data.message, document_ids=doc_ids)
 
     # 3. Store the user's query
     user_message = Message(
@@ -150,10 +155,15 @@ def ask_question_stream(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # 2. Retrieve top chunks (V8: multi-doc uses higher limit)
-    limit = 5 if data.document_id is None else 2
+    # Resolve document_ids (supporting both singular and plural for backward compatibility)
+    doc_ids = data.document_ids
+    if doc_ids is None and data.document_id is not None:
+        doc_ids = [data.document_id]
+
+    # 2. Retrieve top chunks (V8 Phase 2: multi-doc uses higher limit)
+    limit = 5 if (doc_ids is None or len(doc_ids) > 1) else 2
     chunks = retrieve_relevant_chunks(
-        db, current_user.id, data.message, limit=limit, document_id=data.document_id
+        db, current_user.id, data.message, limit=limit, document_ids=doc_ids
     )
 
     # 3. Format citations with enriched metadata (V8: chunk_id + similarity_score)
@@ -202,8 +212,11 @@ def ask_question_stream(
 
 Answer only from the provided document context.
 
-If the answer is not present in the context, respond:
+If the user asks for a summary, comparison, or synthesis of the documents (e.g. similarities or differences):
+- Answer by synthesizing, comparing, or contrasting the facts and evidence present in the retrieved chunks.
+- You are allowed and encouraged to infer similarities and differences from the retrieved evidence, even if they are not stated verbatim in a single sentence.
 
+If the context does not contain enough information to address the question, or if you cannot answer the question or infer comparisons from the provided chunks, respond:
 "I could not find this information in the uploaded documents."
 
 Do not hallucinate.

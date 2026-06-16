@@ -90,11 +90,19 @@ export const chatService = {
     }));
   },
 
-  async sendMessage(sessionId: string, content: string): Promise<{ answer: string; sources: ApiCitation[] }> {
+  async sendMessage(
+    sessionId: string,
+    content: string,
+    documentIds?: string[],
+  ): Promise<{ answer: string; sources: ApiCitation[] }> {
+    const payload: Record<string, any> = { session_id: sessionId, message: content };
+    if (documentIds !== undefined) {
+      payload.document_ids = documentIds;
+    }
     const res = await fetch(`${API_BASE}/api/chat/ask`, {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({ session_id: sessionId, message: content }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to send message' }));
