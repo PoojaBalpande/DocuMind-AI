@@ -185,10 +185,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         documentIds = selectedDocumentIds;
       }
 
-      const bodyPayload: Record<string, any> = {
+      type StreamRequestPayload = {
+        session_id: string;
+        message: string;
+        document_ids?: string[];
+      };
+
+      const bodyPayload: StreamRequestPayload = {
         session_id: activeSessionId,
         message: content,
       };
+
       if (documentIds !== undefined) {
         bodyPayload.document_ids = documentIds;
       }

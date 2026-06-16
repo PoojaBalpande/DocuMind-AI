@@ -95,7 +95,17 @@ export const chatService = {
     content: string,
     documentIds?: string[],
   ): Promise<{ answer: string; sources: ApiCitation[] }> {
-    const payload: Record<string, any> = { session_id: sessionId, message: content };
+    type ChatRequestPayload = {
+      session_id: string;
+      message: string;
+      document_ids?: string[];
+    };
+
+    const payload: ChatRequestPayload = {
+      session_id: sessionId,
+      message: content,
+    };
+
     if (documentIds !== undefined) {
       payload.document_ids = documentIds;
     }
