@@ -1,18 +1,69 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { mockApiKeys } from '@/lib/mockData';
 import Footer from '@/components/layout/Footer';
 
-const tabs = ['General', 'Security', 'API Keys', 'Notifications', 'Billing'];
+const tabs = ['AI Settings', 'General', 'Security', 'API Keys', 'Notifications', 'Billing'];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('Security');
+  const [activeTab, setActiveTab] = useState('AI Settings');
   const { user } = useAuthStore();
+  const { settings, isLoading, error, fetchSettings, updateSettings, resetSettings } = useSettingsStore();
+
+  // Local form state for AI Settings
+  const [modelName, setModelName] = useState('qwen2.5');
+  const [temperature, setTemperature] = useState(0.3);
+  const [maxTokens, setMaxTokens] = useState(2000);
+  const [retrievalTopK, setRetrievalTopK] = useState(5);
+  const [defaultScope, setDefaultScope] = useState('workspace');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Existing tab state (preserved)
   const [twoFaEnabled, setTwoFaEnabled] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // Fetch settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  // Sync local form state when settings load
+  useEffect(() => {
+    if (settings) {
+      setModelName(settings.model_name);
+      setTemperature(settings.temperature);
+      setMaxTokens(settings.max_tokens);
+      setRetrievalTopK(settings.retrieval_top_k);
+      setDefaultScope(settings.default_scope);
+    }
+  }, [settings]);
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    const success = await updateSettings({
+      model_name: modelName,
+      temperature: Number(temperature),
+      max_tokens: Number(maxTokens),
+      retrieval_top_k: Number(retrievalTopK),
+      default_scope: defaultScope as 'workspace' | 'current_document' | 'selected_documents',
+    });
+    setIsSaving(false);
+    if (success) {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
+  };
+
+  const handleResetDefaults = async () => {
+    if (!confirm('Are you sure you want to reset all AI settings to defaults?')) return;
+    await resetSettings();
+  };
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-64px)]">
@@ -43,6 +94,163 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Content */}
+
+        {/* ── V9: AI Settings Tab ── */}
+        {activeTab === 'AI Settings' && (
+          <div className="space-y-xl">
+            {error && (
+              <div className="bg-errorContainer text-error p-md rounded-xl border border-error/20 text-body-sm flex items-center gap-sm">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                {error}
+              </div>
+            )}
+
+            {isLoading && !settings ? (
+              <div className="flex items-center justify-center py-20 text-on-surface-variant">
+                <span className="material-symbols-outlined animate-spin mr-sm">sync</span>
+                Loading settings...
+              </div>
+            ) : (
+              <>
+                {/* Model Configuration */}
+                <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20">
+                  <div className="flex items-center gap-md mb-xl">
+                    <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+                      <span className="material-symbols-outlined text-on-primary-container">smart_toy</span>
+                    </div>
+                    <div>
+                      <h3 className="text-headline-sm text-primary font-semibold">Model Configuration</h3>
+                      <p className="text-body-sm text-on-surface-variant">Configure the AI model used for document analysis.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-lg">
+                    {/* Model Name */}
+                    <div>
+                      <label className="text-body-sm text-primary font-medium mb-xs block">Model</label>
+                      <select
+                        value={modelName}
+                        onChange={(e) => setModelName(e.target.value)}
+                        className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                      >
+                        <option value="qwen2.5">Qwen 2.5</option>
+                        <option value="qwen3:8b">Qwen 3 (8B)</option>
+                        <option value="qwen2.5-coder:7b">Qwen 2.5 Coder (7B)</option>
+                        <option value="llama3">Llama 3</option>
+                        <option value="deepseek-r1">DeepSeek R1</option>
+                      </select>
+                    </div>
+
+                    {/* Temperature */}
+                    <div>
+                      <div className="flex justify-between items-center mb-xs">
+                        <label className="text-body-sm text-primary font-medium">Temperature</label>
+                        <span className="text-label-md text-on-surface-variant font-mono">{temperature.toFixed(1)}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.0"
+                        max="2.0"
+                        step="0.1"
+                        value={temperature}
+                        onChange={(e) => setTemperature(Number(e.target.value))}
+                        className="w-full h-2 bg-outline-variant/30 rounded-lg appearance-none cursor-pointer accent-secondary"
+                      />
+                      <div className="flex justify-between text-label-md text-on-surface-variant mt-xs">
+                        <span>0.0 — Deterministic</span>
+                        <span>2.0 — Creative</span>
+                      </div>
+                    </div>
+
+                    {/* Max Tokens */}
+                    <div>
+                      <label className="text-body-sm text-primary font-medium mb-xs block">Max Tokens</label>
+                      <input
+                        type="number"
+                        min={100}
+                        max={8000}
+                        step={100}
+                        value={maxTokens}
+                        onChange={(e) => setMaxTokens(Number(e.target.value))}
+                        className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                      />
+                      <p className="text-label-md text-on-surface-variant mt-xs">Range: 100 – 8000</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Retrieval Configuration */}
+                <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20">
+                  <div className="flex items-center gap-md mb-xl">
+                    <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+                      <span className="material-symbols-outlined text-on-primary-container">manage_search</span>
+                    </div>
+                    <div>
+                      <h3 className="text-headline-sm text-primary font-semibold">Retrieval Configuration</h3>
+                      <p className="text-body-sm text-on-surface-variant">Control how documents are searched and retrieved.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                    {/* Top-K */}
+                    <div>
+                      <label className="text-body-sm text-primary font-medium mb-xs block">Retrieval Top-K</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={retrievalTopK}
+                        onChange={(e) => setRetrievalTopK(Number(e.target.value))}
+                        className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                      />
+                      <p className="text-label-md text-on-surface-variant mt-xs">Number of document chunks retrieved (1–20)</p>
+                    </div>
+
+                    {/* Default Scope */}
+                    <div>
+                      <label className="text-body-sm text-primary font-medium mb-xs block">Default Scope</label>
+                      <select
+                        value={defaultScope}
+                        onChange={(e) => setDefaultScope(e.target.value)}
+                        className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                      >
+                        <option value="workspace">Workspace (All Documents)</option>
+                        <option value="current_document">Current Document</option>
+                        <option value="selected_documents">Selected Documents</option>
+                      </select>
+                      <p className="text-label-md text-on-surface-variant mt-xs">Default document search scope for new chats</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-md">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="primary-gradient text-on-primary px-xl py-sm rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-sm disabled:opacity-60"
+                  >
+                    {isSaving && <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>}
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleResetDefaults}
+                    className="bg-surface-container border border-outline-variant/30 px-xl py-sm rounded-xl text-body-sm font-medium hover:bg-surface-dim transition-colors"
+                  >
+                    Reset Defaults
+                  </button>
+                  {saveSuccess && (
+                    <span className="text-body-sm text-secondary font-medium flex items-center gap-xs ml-sm">
+                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      Settings saved successfully
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === 'General' && (
           <div className="space-y-xl">
             <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20">

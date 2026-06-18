@@ -12,7 +12,7 @@ from app.core.config import settings
 
 # Import Base and all models so autogenerate can detect tables
 from app.core.database import Base
-from app.models import User, Document, ChatSession, Message  # noqa: F401
+from app.models import User, Document, ChatSession, Message, UserSettings  # noqa: F401
 
 # this is the Alembic Config object
 config = context.config

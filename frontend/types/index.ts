@@ -183,3 +183,26 @@ export interface PricingPlan {
   isPopular?: boolean;
   ctaText: string;
 }
+
+// V9: User settings — matches backend UserSettingsResponse shape
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  model_name: string;
+  temperature: number;
+  max_tokens: number;
+  retrieval_top_k: number;
+  default_scope: 'workspace' | 'current_document' | 'selected_documents';
+  created_at: string;
+  updated_at: string;
+}
+
+// V9: Settings update request — explicit contract for PATCH /api/settings
+export interface SettingsUpdateRequest {
+  model_name?: string;
+  temperature?: number;
+  max_tokens?: number;
+  retrieval_top_k?: number;
+  default_scope?: 'workspace' | 'current_document' | 'selected_documents';
+}
+
