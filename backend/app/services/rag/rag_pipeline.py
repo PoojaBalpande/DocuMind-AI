@@ -1,14 +1,14 @@
-"""RAG pipeline coordinating retriever, context building, and LLM answering.
-
-V8: Supports multi-document retrieval via optional document_id parameter.
-Returns enriched source metadata (chunk_id, document_id, similarity_score).
-"""
-
 import logging
 from sqlalchemy.orm import Session
 from app.services.rag.retriever import retrieve_relevant_chunks
 from app.services.rag.prompt_builder import build_context
 from app.services.rag.llm_service import answer_question
+from app.services.reasoning import (
+    detect_reasoning_intent,
+    format_document_context,
+    build_reasoning_prompt,
+    build_document_contributions,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,9 @@ def run_rag_pipeline(
                     "chunk_id": "...",
                     "snippet": "...",
                     "similarity_score": 0.87,
-                }]
+                }],
+                "reasoning_intent": "...",
+                "document_contributions": [...]
             }
     """
     # 1. Retrieve top chunks (5 for multi-doc breadth, 2 for single-doc focus)
@@ -57,14 +59,38 @@ def run_rag_pipeline(
     if not chunks:
         return {
             "answer": "I could not find this information in the uploaded documents.",
-            "sources": []
+            "sources": [],
+            "reasoning_intent": "default",
+            "document_contributions": [],
         }
 
-    # 2. Build Prompt Context
-    context = build_context(chunks)
+    # 1. Immediately before build_reasoning_prompt():
+    print("===== RETRIEVED CHUNKS =====")
+    for chunk in chunks:
+        print(chunk)
+
+    # 2. Detect Intent, format context, build prompt, and track contributions
+    intent = detect_reasoning_intent(question)
+    context = format_document_context(chunks)
+
+    # 2. Immediately after format_document_context():
+    print("===== FORMATTED CONTEXT =====")
+    print(context)
+
+    prompt = build_reasoning_prompt(intent, question, context)
+
+    # 3. Immediately after build_reasoning_prompt():
+    print("===== FINAL PROMPT =====")
+    print(prompt)
+
+    contributions = build_document_contributions(chunks)
+
+    # 4. Immediately before answer_question():
+    print("===== PROMPT SENT TO LLM =====")
+    print(prompt)
 
     # 3. Generate answer using LLM
-    answer = answer_question(question, context)
+    answer = answer_question(question, context, custom_prompt=prompt)
 
     # 4. Build enriched source citations (deduplicated by chunk_id)
     seen_chunk_ids = set()
@@ -87,5 +113,7 @@ def run_rag_pipeline(
 
     return {
         "answer": answer,
-        "sources": sources
+        "sources": sources,
+        "reasoning_intent": intent.value,
+        "document_contributions": [c.model_dump(mode="json") for c in contributions],
     }

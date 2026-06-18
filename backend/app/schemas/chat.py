@@ -5,6 +5,7 @@ ChatAskSource enriched with document_id, chunk_id, snippet, similarity_score.
 """
 
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel, Field
 
 
@@ -26,12 +27,19 @@ class ChatSessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class DocumentContributionSchema(BaseModel):
+    document_id: UUID
+    document_name: str
+    chunk_ids: list[str]
+
+
 class MessageResponse(BaseModel):
     id: str
     session_id: str
     role: str
     content: str
     citations: list[dict] | None = None
+    reasoning_metadata: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -56,3 +64,6 @@ class ChatAskSource(BaseModel):
 class ChatAskResponse(BaseModel):
     answer: str
     sources: list[ChatAskSource]
+    reasoning_intent: str | None = None
+    document_contributions: list[DocumentContributionSchema] | None = None
+

@@ -8,7 +8,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-def answer_question(question: str, context: str) -> str:
+def answer_question(question: str, context: str, custom_prompt: str | None = None) -> str:
     """Generate grounded answer from Ollama using the provided context.
 
     Uses OLLAMA_MODEL as the primary model and qwen2.5-coder:7b as a fallback.
@@ -29,7 +29,7 @@ If the context does not contain enough information to address the question, or i
 Do not hallucinate.
 Do not use external knowledge."""
 
-    prompt = f"Context:\n{context}\n\nQuestion:\n{question}"
+    prompt = custom_prompt if custom_prompt is not None else f"Context:\n{context}\n\nQuestion:\n{question}"
 
     payload = {
         "model": settings.OLLAMA_MODEL,
@@ -48,6 +48,12 @@ Do not use external knowledge."""
     logger.info(f"  Model Name: {payload['model']}")
     logger.info(f"  Endpoint URL: {url}")
     logger.info(f"  Request Payload: {payload}")
+
+    print("===== SYSTEM PROMPT SENT =====")
+    print(system_prompt)
+
+    print("===== USER PROMPT SENT =====")
+    print(prompt)
 
     try:
         start_time = time.time()

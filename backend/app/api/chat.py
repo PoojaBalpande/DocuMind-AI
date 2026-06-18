@@ -99,12 +99,17 @@ def ask_question(
     )
     db.add(user_message)
 
-    # 4. Store the assistant's answer with citations
+    # 4. Store the assistant's answer with citations and reasoning metadata
+    reasoning_metadata = {
+        "reasoning_intent": result.get("reasoning_intent"),
+        "document_contributions": result.get("document_contributions"),
+    }
     assistant_message = Message(
         session_id=session.id,
         role="assistant",
         content=result["answer"],
         citations=result["sources"],
+        reasoning_metadata=reasoning_metadata,
     )
     db.add(assistant_message)
 
@@ -114,6 +119,8 @@ def ask_question(
     return ChatAskResponse(
         answer=result["answer"],
         sources=result["sources"],
+        reasoning_intent=result.get("reasoning_intent"),
+        document_contributions=result.get("document_contributions"),
     )
 
 
@@ -130,7 +137,12 @@ def ask_question_stream(
     from app.core.config import settings
     from app.models.chat import Message
     from app.services.rag.retriever import retrieve_relevant_chunks
-    from app.services.rag.prompt_builder import build_context
+    from app.services.reasoning import (
+        detect_reasoning_intent,
+        format_document_context,
+        build_reasoning_prompt,
+        build_document_contributions,
+    )
 
     session = (
         db.query(ChatSession)
@@ -166,6 +178,10 @@ def ask_question_stream(
         db, current_user.id, data.message, limit=limit, document_ids=doc_ids
     )
 
+    print("===== RETRIEVED CHUNKS =====")
+    for chunk in chunks:
+        print(chunk)
+
     # 3. Format citations with enriched metadata (V8: chunk_id + similarity_score)
     sources = []
     for chunk in chunks:
@@ -178,9 +194,31 @@ def ask_question_stream(
             "similarity_score": chunk.get("similarity_score"),
         })
 
+    # 4. Detect intent, format context, build prompt, and track contributions
+    intent = detect_reasoning_intent(data.message)
+    context = format_document_context(chunks)
+
+    print("===== FORMATTED CONTEXT =====")
+    print(context)
+
+    prompt = build_reasoning_prompt(intent, data.message, context)
+
+    print("===== FINAL PROMPT =====")
+    print(prompt)
+
+    contributions = build_document_contributions(chunks)
+    contributions_dump = [c.model_dump(mode="json") for c in contributions]
+
     def event_generator():
         # First send citations
         yield f"data: {json.dumps({'type': 'citations', 'citations': sources})}\n\n"
+
+        # Send reasoning metadata for Phase 3/4 backward compatibility
+        yield f"data: {json.dumps({
+            'type': 'reasoning',
+            'reasoning_intent': intent.value,
+            'document_contributions': contributions_dump
+        })}\n\n"
 
         if not chunks:
             fallback_ans = "I could not find this information in the uploaded documents."
@@ -193,18 +231,21 @@ def ask_question_stream(
                 content=data.message,
             )
             db.add(user_message)
+            
+            reasoning_metadata = {
+                "reasoning_intent": intent.value,
+                "document_contributions": contributions_dump,
+            }
             assistant_message = Message(
                 session_id=session.id,
                 role="assistant",
                 content=fallback_ans,
                 citations=[],
+                reasoning_metadata=reasoning_metadata,
             )
             db.add(assistant_message)
             db.commit()
             return
-
-        # 4. Build Prompt Context
-        context = build_context(chunks)
 
         # 5. Generate stream from Ollama
         url = f"{settings.OLLAMA_BASE_URL}/api/chat"
@@ -222,7 +263,12 @@ If the context does not contain enough information to address the question, or i
 Do not hallucinate.
 Do not use external knowledge."""
 
-        prompt = f"Context:\n{context}\n\nQuestion:\n{data.message}"
+        print("===== SYSTEM PROMPT SENT =====")
+        print(system_prompt)
+
+        print("===== USER PROMPT SENT =====")
+        print(prompt)
+
         payload = {
             "model": settings.OLLAMA_MODEL,
             "messages": [
@@ -279,11 +325,17 @@ Do not use external knowledge."""
             content=data.message,
         )
         db.add(user_message)
+        
+        reasoning_metadata = {
+            "reasoning_intent": intent.value,
+            "document_contributions": contributions_dump,
+        }
         assistant_message = Message(
             session_id=session.id,
             role="assistant",
             content=full_answer.strip(),
             citations=sources,
+            reasoning_metadata=reasoning_metadata,
         )
         db.add(assistant_message)
         db.commit()
