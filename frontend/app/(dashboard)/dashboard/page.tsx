@@ -5,13 +5,13 @@ import { useAnalyticsStore } from '@/stores/analyticsStore';
 import Footer from '@/components/layout/Footer';
 
 export default function DashboardPage() {
-  const { analytics, revenueData, systemHealth, userActivity, isLoading, initAnalytics } = useAnalyticsStore();
+  const { workspaceOverview, revenueData, systemHealth, userActivity, isLoading, initAnalytics } = useAnalyticsStore();
 
   useEffect(() => {
     initAnalytics();
   }, [initAnalytics]);
 
-  if (isLoading || !analytics) {
+  if (isLoading || !workspaceOverview) {
     return (
       <div className="flex-1 flex items-center justify-center py-xxl">
         <div className="flex items-center gap-sm text-on-surface-variant">
@@ -26,10 +26,10 @@ export default function DashboardPage() {
   }
 
   const statCards = [
-    { icon: 'group', label: 'Total Users', value: analytics.totalUsers.toLocaleString(), change: `+${analytics.userChange}%`, color: 'text-secondary' },
-    { icon: 'monitor_heart', label: 'Current MRR', value: `$${analytics.currentMRR.toLocaleString()}`, change: `+${analytics.mrrChange}%`, color: 'text-secondary' },
-    { icon: 'description', label: 'Total Documents', value: analytics.totalDocuments >= 1_000_000 ? `${(analytics.totalDocuments / 1_000_000).toFixed(1)}M` : analytics.totalDocuments.toLocaleString(), change: `+${analytics.documentChange}%`, color: 'text-secondary' },
-    { icon: 'health_and_safety', label: 'System Health', value: `${analytics.systemHealth}%`, change: 'Optimal', color: 'text-secondary', badgeColor: 'bg-secondary/10 text-secondary' },
+    { icon: 'description', label: 'Total Documents', value: workspaceOverview.total_documents.toLocaleString(), change: 'Live', color: 'text-secondary' },
+    { icon: 'forum', label: 'Total Chats', value: workspaceOverview.total_chats.toLocaleString(), change: 'Live', color: 'text-secondary' },
+    { icon: 'chat_bubble', label: 'Total Messages', value: workspaceOverview.total_messages.toLocaleString(), change: 'Live', color: 'text-secondary' },
+    { icon: 'storage', label: 'Storage Used', value: `${workspaceOverview.storage_used_mb.toFixed(1)} MB / 1 TB used`, change: 'Live', color: 'text-secondary' },
   ];
 
   const healthColors: Record<string, string> = {
@@ -188,7 +188,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex justify-between items-center mt-lg pt-md border-t border-outline-variant/10">
-            <p className="text-body-sm text-on-surface-variant">Showing {userActivity.length} of {analytics.totalUsers.toLocaleString()} users</p>
+            <p className="text-body-sm text-on-surface-variant">Showing {userActivity.length} of 150 users</p>
             <div className="flex gap-xs">
               <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant/20 text-on-surface-variant hover:bg-surface-dim transition-colors">
                 <span className="material-symbols-outlined text-[18px]">chevron_left</span>

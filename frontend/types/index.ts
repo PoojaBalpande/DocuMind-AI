@@ -206,3 +206,11 @@ export interface SettingsUpdateRequest {
   default_scope?: 'workspace' | 'current_document' | 'selected_documents';
 }
 
+// V9 Phase 3: Workspace overview analytics
+export interface WorkspaceOverview {
+  total_documents: number;
+  total_chats: number;
+  total_messages: number;
+  storage_used_mb: number;
+}
+

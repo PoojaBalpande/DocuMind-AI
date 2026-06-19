@@ -1,28 +1,23 @@
-// DocuMind AI — Analytics Service (Mock)
+import { authService } from './authService';
+import type { WorkspaceOverview } from '@/types';
 
-import type { Analytics, RevenueData, UserActivity, SystemHealthLog } from '@/types';
-import { mockAnalytics, mockRevenueData, mockUserActivity, mockSystemHealth } from '@/lib/mockData';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+function authHeaders(): Record<string, string> {
+  const token = authService.getToken();
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
+}
 
 export const analyticsService = {
-  async getDashboardMetrics(): Promise<Analytics> {
-    await delay(500);
-    return mockAnalytics;
-  },
-
-  async getRevenueData(): Promise<RevenueData[]> {
-    await delay(400);
-    return mockRevenueData;
-  },
-
-  async getUserActivity(): Promise<UserActivity[]> {
-    await delay(300);
-    return mockUserActivity;
-  },
-
-  async getSystemHealth(): Promise<SystemHealthLog[]> {
-    await delay(300);
-    return mockSystemHealth;
+  async getWorkspaceOverview(): Promise<WorkspaceOverview> {
+    const res = await fetch(`${API_BASE}/api/analytics/overview`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      throw new Error('Failed to fetch workspace overview');
+    }
+    return res.json();
   },
 };
