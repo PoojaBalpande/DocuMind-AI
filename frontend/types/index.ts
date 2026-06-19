@@ -214,3 +214,35 @@ export interface WorkspaceOverview {
   storage_used_mb: number;
 }
 
+// V9 Phase 4: Usage Insights Types
+export interface ActivityItem {
+  type: 'document_upload' | 'chat_created' | 'recent_question';
+  description: string;
+  timestamp: string;
+}
+
+export interface UploadTrends {
+  today: number;
+  week: number;
+  month: number;
+}
+
+export interface ChatTrends {
+  today: number;
+  week: number;
+  month: number;
+}
+
+export interface TopChat {
+  session_id: string;
+  title: string;
+  message_count: number;
+}
+
+export interface AnalyticsInsights {
+  recent_activity: ActivityItem[];
+  upload_trends: UploadTrends;
+  chat_trends: ChatTrends;
+  top_chats: TopChat[];
+}
+
