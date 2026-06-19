@@ -4,11 +4,18 @@ import logging
 import requests
 import time
 from app.core.config import settings
+from app.services.settings_service import SETTINGS_DEFAULTS
 
 logger = logging.getLogger(__name__)
 
 
-def answer_question(question: str, context: str, custom_prompt: str | None = None) -> str:
+def answer_question(
+    question: str,
+    context: str,
+    custom_prompt: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> str:
     """Generate grounded answer from Ollama using the provided context.
 
     Uses OLLAMA_MODEL as the primary model and qwen2.5-coder:7b as a fallback.
@@ -31,6 +38,10 @@ Do not use external knowledge."""
 
     prompt = custom_prompt if custom_prompt is not None else f"Context:\n{context}\n\nQuestion:\n{question}"
 
+    # Use settings defaults if parameters are None
+    temp_val = temperature if temperature is not None else SETTINGS_DEFAULTS["temperature"]
+    max_tokens_val = max_tokens if max_tokens is not None else SETTINGS_DEFAULTS["max_tokens"]
+
     payload = {
         "model": settings.OLLAMA_MODEL,
         "messages": [
@@ -39,7 +50,8 @@ Do not use external knowledge."""
         ],
         "stream": False,
         "options": {
-            "temperature": 0.0
+            "temperature": temp_val,
+            "num_predict": max_tokens_val,
         }
     }
 

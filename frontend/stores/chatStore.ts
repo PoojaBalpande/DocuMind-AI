@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import type { ChatSession, Message, Citation } from '@/types';
 import { chatService, type ApiChatSession, type ApiCitation } from '@/services/chatService';
 import { authService } from '@/services/authService';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -74,6 +75,12 @@ function mapApiCitationToCitation(
   };
 }
 
+function mapDefaultScope(scope?: string): 'workspace' | 'current' | 'selected' {
+  if (scope === 'current_document') return 'current';
+  if (scope === 'selected_documents') return 'selected';
+  return 'workspace';
+}
+
 export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
   activeSessionId: null,
@@ -91,11 +98,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setActiveDocumentId: (id) => set({ activeDocumentId: id }),
 
   setActiveSession: async (id) => {
+    const settings = useSettingsStore.getState().settings;
+    const initialScope = mapDefaultScope(settings?.default_scope);
     set({
       activeSessionId: id,
       messages: [],
       isLoadingMessages: true,
-      retrievalScope: 'workspace',
+      retrievalScope: initialScope,
       selectedDocumentIds: [],
       activeDocumentId: null,
     });
@@ -110,6 +119,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   createNewChat: (title) => {
+    const settings = useSettingsStore.getState().settings;
+    const initialScope = mapDefaultScope(settings?.default_scope);
     const tempId = 'chat_' + Date.now();
     const tempSession: ChatSession = {
       id: tempId,
@@ -125,7 +136,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       sessions: [tempSession, ...state.sessions],
       activeSessionId: tempId,
       messages: [],
-      retrievalScope: 'workspace',
+      retrievalScope: initialScope,
       selectedDocumentIds: [],
       activeDocumentId: null,
     }));
@@ -360,6 +371,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   initChat: async () => {
+    // Load settings if they are not already loaded to get the user's default scope preference
+    const settingsStore = useSettingsStore.getState();
+    if (!settingsStore.settings) {
+      await settingsStore.fetchSettings();
+    }
+    const initialScope = mapDefaultScope(settingsStore.settings?.default_scope);
+
     set({ isLoadingSessions: true });
     try {
       const apiSessions = await chatService.getSessions();
@@ -371,7 +389,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           activeSessionId: firstSessionId,
           messages: [],
           isLoadingMessages: true,
-          retrievalScope: 'workspace',
+          retrievalScope: initialScope,
           selectedDocumentIds: [],
           activeDocumentId: null,
         });
@@ -387,7 +405,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({
           activeSessionId: null,
           messages: [],
-          retrievalScope: 'workspace',
+          retrievalScope: initialScope,
           selectedDocumentIds: [],
           activeDocumentId: null,
         });

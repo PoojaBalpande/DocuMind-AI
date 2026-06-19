@@ -172,8 +172,10 @@ def ask_question_stream(
     if doc_ids is None and data.document_id is not None:
         doc_ids = [data.document_id]
 
-    # 2. Retrieve top chunks (V8 Phase 2: multi-doc uses higher limit)
-    limit = 5 if (doc_ids is None or len(doc_ids) > 1) else 2
+    # 2. Retrieve top chunks using user-configured settings
+    from app.services.settings_service import SettingsService
+    user_settings = SettingsService.get_or_create_settings(db, current_user.id)
+    limit = user_settings.retrieval_top_k
     chunks = retrieve_relevant_chunks(
         db, current_user.id, data.message, limit=limit, document_ids=doc_ids
     )
@@ -277,7 +279,8 @@ Do not use external knowledge."""
             ],
             "stream": True,
             "options": {
-                "temperature": 0.0
+                "temperature": user_settings.temperature,
+                "num_predict": user_settings.max_tokens,
             }
         }
 

@@ -1,6 +1,7 @@
 import logging
 from sqlalchemy.orm import Session
 from app.services.rag.retriever import retrieve_relevant_chunks
+from app.services.settings_service import SettingsService
 from app.services.rag.prompt_builder import build_context
 from app.services.rag.llm_service import answer_question
 from app.services.reasoning import (
@@ -45,8 +46,9 @@ def run_rag_pipeline(
                 "document_contributions": [...]
             }
     """
-    # 1. Retrieve top chunks (5 for multi-doc breadth, 2 for single-doc focus)
-    limit = 5 if (document_ids is None or len(document_ids) > 1) else 2
+    # 1. Retrieve top chunks using user-configured settings
+    settings = SettingsService.get_or_create_settings(db, user_id)
+    limit = settings.retrieval_top_k
     chunks = retrieve_relevant_chunks(
         db, user_id, question, limit=limit, document_ids=document_ids
     )
@@ -90,7 +92,13 @@ def run_rag_pipeline(
     print(prompt)
 
     # 3. Generate answer using LLM
-    answer = answer_question(question, context, custom_prompt=prompt)
+    answer = answer_question(
+        question,
+        context,
+        custom_prompt=prompt,
+        temperature=settings.temperature,
+        max_tokens=settings.max_tokens,
+    )
 
     # 4. Build enriched source citations (deduplicated by chunk_id)
     seen_chunk_ids = set()
