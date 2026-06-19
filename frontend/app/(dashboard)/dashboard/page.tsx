@@ -26,10 +26,10 @@ export default function DashboardPage() {
   }
 
   const statCards = [
-    { icon: 'description', label: 'Total Documents', value: workspaceOverview.total_documents.toLocaleString(), change: 'Live', color: 'text-secondary' },
-    { icon: 'forum', label: 'Total Chats', value: workspaceOverview.total_chats.toLocaleString(), change: 'Live', color: 'text-secondary' },
-    { icon: 'chat_bubble', label: 'Total Messages', value: workspaceOverview.total_messages.toLocaleString(), change: 'Live', color: 'text-secondary' },
-    { icon: 'storage', label: 'Storage Used', value: `${workspaceOverview.storage_used_mb.toFixed(1)} MB / 1 TB used`, change: 'Live', color: 'text-secondary' },
+    { icon: 'description', label: 'Total Documents', value: workspaceOverview.total_documents.toLocaleString(), change: 'Live', color: 'text-secondary', badgeColor: 'bg-secondary/10 text-secondary' },
+    { icon: 'forum', label: 'Total Chats', value: workspaceOverview.total_chats.toLocaleString(), change: 'Live', color: 'text-secondary', badgeColor: 'bg-secondary/10 text-secondary' },
+    { icon: 'chat_bubble', label: 'Total Messages', value: workspaceOverview.total_messages.toLocaleString(), change: 'Live', color: 'text-secondary', badgeColor: 'bg-secondary/10 text-secondary' },
+    { icon: 'storage', label: 'Storage Used', value: `${workspaceOverview.storage_used_mb.toFixed(1)} MB / 1 TB used`, change: 'Live', color: 'text-secondary', badgeColor: 'bg-secondary/10 text-secondary' },
   ];
 
   const healthColors: Record<string, string> = {

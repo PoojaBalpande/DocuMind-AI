@@ -13,14 +13,54 @@ export default function SettingsPage() {
   const { user } = useAuthStore();
   const { settings, isLoading, error, fetchSettings, updateSettings, resetSettings } = useSettingsStore();
 
-  // Local form state for AI Settings
-  const [modelName, setModelName] = useState('qwen2.5');
-  const [temperature, setTemperature] = useState(0.3);
-  const [maxTokens, setMaxTokens] = useState(2000);
-  const [retrievalTopK, setRetrievalTopK] = useState(5);
-  const [defaultScope, setDefaultScope] = useState('workspace');
+  // Local form state for AI Settings (derived pattern to avoid useEffect setState)
+  interface AIFormState {
+    model_name: string;
+    temperature: number;
+    max_tokens: number;
+    retrieval_top_k: number;
+    default_scope: 'workspace' | 'current_document' | 'selected_documents';
+  }
+
+  const [formState, setFormState] = useState<AIFormState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Derive active settings from user changes (formState) or loaded settings or hardcoded defaults
+  const activeSettings = formState || (settings ? {
+    model_name: settings.model_name,
+    temperature: settings.temperature,
+    max_tokens: settings.max_tokens,
+    retrieval_top_k: settings.retrieval_top_k,
+    default_scope: settings.default_scope,
+  } : {
+    model_name: 'qwen2.5',
+    temperature: 0.3,
+    max_tokens: 2000,
+    retrieval_top_k: 5,
+    default_scope: 'workspace' as const,
+  });
+
+  const handleFieldChange = <K extends keyof AIFormState>(key: K, value: AIFormState[K]) => {
+    const current = formState || (settings ? {
+      model_name: settings.model_name,
+      temperature: settings.temperature,
+      max_tokens: settings.max_tokens,
+      retrieval_top_k: settings.retrieval_top_k,
+      default_scope: settings.default_scope,
+    } : {
+      model_name: 'qwen2.5',
+      temperature: 0.3,
+      max_tokens: 2000,
+      retrieval_top_k: 5,
+      default_scope: 'workspace' as const,
+    });
+
+    setFormState({
+      ...current,
+      [key]: value,
+    });
+  };
 
   // Existing tab state (preserved)
   const [twoFaEnabled, setTwoFaEnabled] = useState(true);
@@ -32,37 +72,30 @@ export default function SettingsPage() {
     fetchSettings();
   }, [fetchSettings]);
 
-  // Sync local form state when settings load
-  useEffect(() => {
-    if (settings) {
-      setModelName(settings.model_name);
-      setTemperature(settings.temperature);
-      setMaxTokens(settings.max_tokens);
-      setRetrievalTopK(settings.retrieval_top_k);
-      setDefaultScope(settings.default_scope);
-    }
-  }, [settings]);
-
   const handleSaveSettings = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
     const success = await updateSettings({
-      model_name: modelName,
-      temperature: Number(temperature),
-      max_tokens: Number(maxTokens),
-      retrieval_top_k: Number(retrievalTopK),
-      default_scope: defaultScope as 'workspace' | 'current_document' | 'selected_documents',
+      model_name: activeSettings.model_name,
+      temperature: Number(activeSettings.temperature),
+      max_tokens: Number(activeSettings.max_tokens),
+      retrieval_top_k: Number(activeSettings.retrieval_top_k),
+      default_scope: activeSettings.default_scope,
     });
     setIsSaving(false);
     if (success) {
       setSaveSuccess(true);
+      setFormState(null); // Reset formState to use the updated settings from the store
       setTimeout(() => setSaveSuccess(false), 3000);
     }
   };
 
   const handleResetDefaults = async () => {
     if (!confirm('Are you sure you want to reset all AI settings to defaults?')) return;
-    await resetSettings();
+    const success = await resetSettings();
+    if (success) {
+      setFormState(null);
+    }
   };
 
   return (
@@ -129,8 +162,8 @@ export default function SettingsPage() {
                     <div>
                       <label className="text-body-sm text-primary font-medium mb-xs block">Model</label>
                       <select
-                        value={modelName}
-                        onChange={(e) => setModelName(e.target.value)}
+                        value={activeSettings.model_name}
+                        onChange={(e) => handleFieldChange('model_name', e.target.value)}
                         className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
                       >
                         <option value="qwen2.5">Qwen 2.5</option>
@@ -145,15 +178,15 @@ export default function SettingsPage() {
                     <div>
                       <div className="flex justify-between items-center mb-xs">
                         <label className="text-body-sm text-primary font-medium">Temperature</label>
-                        <span className="text-label-md text-on-surface-variant font-mono">{temperature.toFixed(1)}</span>
+                        <span className="text-label-md text-on-surface-variant font-mono">{activeSettings.temperature.toFixed(1)}</span>
                       </div>
                       <input
                         type="range"
                         min="0.0"
                         max="2.0"
                         step="0.1"
-                        value={temperature}
-                        onChange={(e) => setTemperature(Number(e.target.value))}
+                        value={activeSettings.temperature}
+                        onChange={(e) => handleFieldChange('temperature', Number(e.target.value))}
                         className="w-full h-2 bg-outline-variant/30 rounded-lg appearance-none cursor-pointer accent-secondary"
                       />
                       <div className="flex justify-between text-label-md text-on-surface-variant mt-xs">
@@ -170,8 +203,8 @@ export default function SettingsPage() {
                         min={100}
                         max={8000}
                         step={100}
-                        value={maxTokens}
-                        onChange={(e) => setMaxTokens(Number(e.target.value))}
+                        value={activeSettings.max_tokens}
+                        onChange={(e) => handleFieldChange('max_tokens', Number(e.target.value))}
                         className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
                       />
                       <p className="text-label-md text-on-surface-variant mt-xs">Range: 100 – 8000</p>
@@ -199,8 +232,8 @@ export default function SettingsPage() {
                         type="number"
                         min={1}
                         max={20}
-                        value={retrievalTopK}
-                        onChange={(e) => setRetrievalTopK(Number(e.target.value))}
+                        value={activeSettings.retrieval_top_k}
+                        onChange={(e) => handleFieldChange('retrieval_top_k', Number(e.target.value))}
                         className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
                       />
                       <p className="text-label-md text-on-surface-variant mt-xs">Number of document chunks retrieved (1–20)</p>
@@ -210,8 +243,8 @@ export default function SettingsPage() {
                     <div>
                       <label className="text-body-sm text-primary font-medium mb-xs block">Default Scope</label>
                       <select
-                        value={defaultScope}
-                        onChange={(e) => setDefaultScope(e.target.value)}
+                        value={activeSettings.default_scope}
+                        onChange={(e) => handleFieldChange('default_scope', e.target.value as 'workspace' | 'current_document' | 'selected_documents')}
                         className="w-full bg-white border border-outline-variant/30 rounded-xl py-md px-lg text-body-md focus:ring-2 focus:ring-secondary/20 focus:outline-none"
                       >
                         <option value="workspace">Workspace (All Documents)</option>

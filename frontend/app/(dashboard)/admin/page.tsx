@@ -11,7 +11,6 @@ export default function AdminPage() {
     analyticsInsights,
     revenueData,
     systemHealth,
-    userActivity,
     isLoading: isAnalyticsLoading,
     initAnalytics,
   } = useAnalyticsStore();
@@ -299,7 +298,7 @@ export default function AdminPage() {
                             value={member.role}
                             disabled={member.role === 'owner'}
                             onChange={async (e) => {
-                              const selectedRole = e.target.value as any;
+                              const selectedRole = e.target.value as 'owner' | 'admin' | 'member' | 'viewer';
                               const success = await updateRole(member.id, selectedRole);
                               if (!success) {
                                 alert(useMemberStore.getState().error || 'Failed to update member role');
@@ -370,7 +369,7 @@ export default function AdminPage() {
                 <label className="block text-label-md text-on-surface-variant mb-xs font-semibold">Role</label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member' | 'viewer')}
                   className="w-full bg-white border border-outline-variant/30 rounded-xl py-sm px-md text-body-sm focus:ring-2 focus:ring-secondary/20 focus:outline-none cursor-pointer"
                 >
                   <option value="admin">Admin</option>
