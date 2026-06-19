@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
+import { useMemberStore } from '@/stores/memberStore';
 import Footer from '@/components/layout/Footer';
 
 export default function AdminPage() {
@@ -11,15 +12,32 @@ export default function AdminPage() {
     revenueData,
     systemHealth,
     userActivity,
-    isLoading,
+    isLoading: isAnalyticsLoading,
     initAnalytics,
   } = useAnalyticsStore();
 
+  const {
+    members,
+    isLoading: isMemberLoading,
+    fetchMembers,
+    inviteMember,
+    updateRole,
+    removeMember,
+  } = useMemberStore();
+
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('viewer');
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     initAnalytics();
-  }, [initAnalytics]);
+    fetchMembers();
+  }, [initAnalytics, fetchMembers]);
 
-  if (isLoading || !workspaceOverview || !analyticsInsights) {
+  if (isAnalyticsLoading || isMemberLoading || !workspaceOverview || !analyticsInsights) {
     return (
       <div className="flex-1 flex items-center justify-center py-xxl">
         <div className="flex items-center gap-sm text-on-surface-variant">
@@ -53,7 +71,10 @@ export default function AdminPage() {
             <button className="bg-surface-container border border-outline-variant/30 px-md py-sm rounded-xl text-body-sm font-medium flex items-center gap-sm hover:bg-surface-dim transition-colors">
               <span className="material-symbols-outlined text-[18px]">download</span>Export
             </button>
-            <button className="primary-gradient text-on-primary px-md py-sm rounded-xl text-body-sm font-semibold flex items-center gap-sm hover:shadow-lg transition-all">
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="primary-gradient text-on-primary px-md py-sm rounded-xl text-body-sm font-semibold flex items-center gap-sm hover:shadow-lg transition-all"
+            >
               <span className="material-symbols-outlined text-[18px]">person_add</span>Invite User
             </button>
           </div>
@@ -232,6 +253,8 @@ export default function AdminPage() {
               <input
                 type="text"
                 placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-surface-container-lowest border border-outline-variant/30 rounded-lg py-sm pl-xl pr-md text-body-sm focus:ring-2 focus:ring-secondary/20 focus:outline-none w-56"
               />
             </div>
@@ -248,41 +271,185 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {userActivity.map((ua) => (
-                  <tr key={ua.id} className="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
-                    <td className="py-lg">
-                      <div className="flex items-center gap-md">
-                        <div className="w-10 h-10 rounded-full bg-surface-dim flex items-center justify-center text-label-lg font-bold text-primary">{ua.user.firstName[0]}{ua.user.lastName[0]}</div>
-                        <div>
-                          <p className="text-body-sm text-primary font-semibold">{ua.user.firstName} {ua.user.lastName}</p>
-                          <p className="text-label-md text-on-surface-variant">{ua.user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-lg">
-                      <span className={`px-md py-xs rounded-full text-label-md font-semibold border ${ua.user.role === 'admin' ? 'bg-primary/5 border-primary/20 text-primary' : ua.user.role === 'viewer' ? 'bg-secondary/5 border-secondary/20 text-secondary' : 'bg-surface-dim border-outline-variant/30 text-on-surface-variant'}`}>
-                        {ua.user.role.charAt(0).toUpperCase() + ua.user.role.slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-lg">
-                      <div className="flex items-center gap-xs">
-                        <span className={`w-2 h-2 rounded-full ${ua.status === 'active' ? 'bg-green-500' : 'bg-outline'}`}></span>
-                        <span className="text-body-sm text-on-surface-variant capitalize">{ua.status}</span>
-                      </div>
-                    </td>
-                    <td className="py-lg text-body-sm text-on-surface-variant">{ua.lastActivity}</td>
-                    <td className="py-lg">
-                      <button className="text-on-surface-variant hover:text-primary transition-colors">
-                        <span className="material-symbols-outlined">more_horiz</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {members
+                  .filter(m => 
+                    m.member_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    m.member_email.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((member) => {
+                    const initials = member.member_name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2);
+                    return (
+                      <tr key={member.id} className="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors">
+                        <td className="py-lg">
+                          <div className="flex items-center gap-md">
+                            <div className="w-10 h-10 rounded-full bg-surface-dim flex items-center justify-center text-label-lg font-bold text-primary">{initials}</div>
+                            <div>
+                              <p className="text-body-sm text-primary font-semibold">{member.member_name}</p>
+                              <p className="text-label-md text-on-surface-variant">{member.member_email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-lg">
+                          <select
+                            value={member.role}
+                            disabled={member.role === 'owner'}
+                            onChange={async (e) => {
+                              const selectedRole = e.target.value as any;
+                              const success = await updateRole(member.id, selectedRole);
+                              if (!success) {
+                                alert(useMemberStore.getState().error || 'Failed to update member role');
+                              }
+                            }}
+                            className="bg-white border border-outline-variant/30 rounded-lg px-md py-xs text-body-xs font-semibold focus:outline-none cursor-pointer disabled:bg-surface-dim disabled:cursor-not-allowed"
+                          >
+                            <option value="owner">Owner</option>
+                            <option value="admin">Admin</option>
+                            <option value="member">Member</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        </td>
+                        <td className="py-lg">
+                          <div className="flex items-center gap-xs">
+                            <span className={`w-2 h-2 rounded-full ${member.status === 'active' ? 'bg-green-500' : member.status === 'pending' ? 'bg-amber-500' : 'bg-outline'}`}></span>
+                            <span className="text-body-sm text-on-surface-variant capitalize">{member.status}</span>
+                          </div>
+                        </td>
+                        <td className="py-lg text-body-sm text-on-surface-variant">{new Date(member.created_at).toLocaleDateString()}</td>
+                        <td className="py-lg">
+                          <button
+                            disabled={member.role === 'owner'}
+                            onClick={() => setMemberToRemove(member.id)}
+                            className="text-on-surface-variant hover:text-error transition-colors disabled:opacity-40 disabled:hover:text-on-surface-variant cursor-pointer disabled:cursor-not-allowed flex items-center justify-center p-xs hover:bg-error/10 rounded-lg"
+                            title="Remove Member"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">person_remove</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
         </div>
       </div>
+
+      {/* Invite Member Modal */}
+      {isInviteOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-md backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setIsInviteOpen(false)}></div>
+          <div className="relative z-10 bg-white rounded-3xl p-6 w-[500px] max-w-[calc(100vw-32px)] shadow-xl animate-fade-in">
+            <h2 className="text-headline-sm text-primary font-bold mb-md">Invite Team Member</h2>
+            <div className="space-y-md mb-lg">
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-xs font-semibold">Name</label>
+                <input
+                  type="text"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-sm px-md text-body-sm focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-xs font-semibold">Email</label>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="john@example.com"
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-sm px-md text-body-sm focus:ring-2 focus:ring-secondary/20 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-xs font-semibold">Role</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  className="w-full bg-white border border-outline-variant/30 rounded-xl py-sm px-md text-body-sm focus:ring-2 focus:ring-secondary/20 focus:outline-none cursor-pointer"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="member">Member</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-sm">
+              <button
+                onClick={() => setIsInviteOpen(false)}
+                className="px-lg py-sm rounded-xl text-on-surface-variant hover:bg-surface-variant/30 font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!inviteName.trim() || !inviteEmail.trim()) {
+                    alert('Please enter Name and Email');
+                    return;
+                  }
+                  const success = await inviteMember({
+                    member_name: inviteName.trim(),
+                    member_email: inviteEmail.trim(),
+                    role: inviteRole,
+                  });
+                  if (success) {
+                    setInviteName('');
+                    setInviteEmail('');
+                    setInviteRole('viewer');
+                    setIsInviteOpen(false);
+                  } else {
+                    alert(useMemberStore.getState().error || 'Failed to invite member');
+                  }
+                }}
+                className="px-lg py-sm rounded-xl primary-gradient text-on-primary font-semibold hover:shadow-lg transition-all active:scale-95"
+              >
+                Invite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Confirm Modal */}
+      {memberToRemove && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-md backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setMemberToRemove(null)}></div>
+          <div className="relative z-10 bg-white rounded-3xl p-6 w-[450px] max-w-[calc(100vw-32px)] shadow-xl animate-fade-in">
+            <h2 className="text-error text-xl font-bold mb-md flex items-center gap-xs">
+              <span className="material-symbols-outlined">delete_forever</span> Remove Team Member?
+            </h2>
+            <p className="mb-lg text-on-surface-variant">
+              Are you sure you want to remove this member from the workspace? This will revoke all access.
+            </p>
+            <div className="flex justify-end gap-sm">
+              <button
+                onClick={() => setMemberToRemove(null)}
+                className="px-lg py-sm rounded-xl text-on-surface-variant hover:bg-surface-variant/30 font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const success = await removeMember(memberToRemove);
+                  if (success) {
+                    setMemberToRemove(null);
+                  } else {
+                    alert(useMemberStore.getState().error || 'Failed to remove member');
+                  }
+                }}
+                className="px-lg py-sm rounded-xl bg-error text-on-error font-semibold hover:bg-error/90 transition-all active:scale-95"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

@@ -246,3 +246,22 @@ export interface AnalyticsInsights {
   top_chats: TopChat[];
 }
 
+// V9 Phase 5: Team Members Management Types
+export interface Member {
+  id: string;
+  workspace_id?: string | null;
+  user_id: string;
+  member_email: string;
+  member_name: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  status: 'pending' | 'active' | 'removed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMemberRequest {
+  member_name: string;
+  member_email: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+}
+

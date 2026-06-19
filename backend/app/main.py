@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api import auth, documents, chat, analytics
+from app.api import auth, documents, chat, analytics, members
 from app.api import settings as settings_api
 
 app = FastAPI(
@@ -35,6 +35,7 @@ app.include_router(documents.router, prefix="/api/documents", tags=["Documents"]
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(settings_api.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(members.router, prefix="/api/members", tags=["Members"])
 
 
 @app.get("/api/health")
