@@ -5,13 +5,21 @@ import { useAnalyticsStore } from '@/stores/analyticsStore';
 import Footer from '@/components/layout/Footer';
 
 export default function AdminPage() {
-  const { analytics, revenueData, systemHealth, userActivity, isLoading, initAnalytics } = useAnalyticsStore();
+  const {
+    workspaceOverview,
+    analyticsInsights,
+    revenueData,
+    systemHealth,
+    userActivity,
+    isLoading,
+    initAnalytics,
+  } = useAnalyticsStore();
 
   useEffect(() => {
     initAnalytics();
   }, [initAnalytics]);
 
-  if (isLoading || !analytics) {
+  if (isLoading || !workspaceOverview || !analyticsInsights) {
     return (
       <div className="flex-1 flex items-center justify-center py-xxl">
         <div className="flex items-center gap-sm text-on-surface-variant">
@@ -54,10 +62,10 @@ export default function AdminPage() {
         {/* Overview Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-lg">
           {[
-            { label: 'Total Users', value: analytics.totalUsers.toLocaleString(), icon: 'group', change: `+${analytics.userChange}%` },
-            { label: 'Active Users', value: analytics.activeUsers.toLocaleString(), icon: 'person', change: '+8.3%' },
-            { label: 'Total Queries', value: `${(analytics.totalQueries / 1000).toFixed(0)}K`, icon: 'chat', change: '+15.7%' },
-            { label: 'Storage Used', value: `${analytics.storageUsedGB} GB`, icon: 'cloud', change: `${((analytics.storageUsedGB / analytics.storageLimitGB) * 100).toFixed(0)}%` },
+            { label: 'Total Documents', value: workspaceOverview.total_documents.toLocaleString(), icon: 'description', change: 'Live' },
+            { label: 'Total Chats', value: workspaceOverview.total_chats.toLocaleString(), icon: 'forum', change: 'Live' },
+            { label: 'Total Messages', value: workspaceOverview.total_messages.toLocaleString(), icon: 'chat_bubble', change: 'Live' },
+            { label: 'Storage Used', value: `${workspaceOverview.storage_used_mb.toFixed(1)} MB`, icon: 'storage', change: 'Live' },
           ].map((card) => (
             <div key={card.label} className="bg-surface-container-lowest rounded-2xl p-lg border border-outline-variant/20 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-md">
@@ -68,6 +76,101 @@ export default function AdminPage() {
               <p className="text-headline-md text-primary font-bold">{card.value}</p>
             </div>
           ))}
+        </div>
+
+        {/* Usage Insights Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+          {/* Column 1: Recent Activity */}
+          <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex flex-col h-[400px]">
+            <h2 className="text-headline-sm text-primary font-semibold mb-lg flex items-center gap-xs">
+              <span className="material-symbols-outlined text-[20px] text-secondary">history</span> Recent Activity
+            </h2>
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-md">
+              {analyticsInsights.recent_activity.slice(0, 10).map((activity, idx) => {
+                const icon = activity.type === 'document_upload' ? '📄' : activity.type === 'chat_created' ? '💬' : '❓';
+                return (
+                  <div key={idx} className="flex gap-sm items-start hover:bg-surface-container-low/30 p-xs rounded-lg transition-colors">
+                    <span className="text-[18px] mt-[2px]">{icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-body-sm text-primary font-medium truncate">{activity.description}</p>
+                      <p className="text-[10px] text-on-surface-variant opacity-70">
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              {analyticsInsights.recent_activity.length === 0 && (
+                <p className="text-body-sm text-on-surface-variant opacity-70 italic text-center py-xl">No recent activity.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Column 2: Trends */}
+          <div className="space-y-lg flex flex-col h-[400px] justify-between">
+            {/* Upload Trends */}
+            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex-1 flex flex-col justify-center">
+              <h2 className="text-headline-sm text-primary font-semibold mb-md flex items-center gap-xs">
+                <span className="material-symbols-outlined text-[20px] text-secondary">trending_up</span> Upload Trends
+              </h2>
+              <div className="grid grid-cols-3 gap-sm">
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">TODAY</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.upload_trends.today}</p>
+                </div>
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">THIS WEEK</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.upload_trends.week}</p>
+                </div>
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">THIS MONTH</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.upload_trends.month}</p>
+                </div>
+              </div>
+            </div>
+            {/* Chat Trends */}
+            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex-1 flex flex-col justify-center">
+              <h2 className="text-headline-sm text-primary font-semibold mb-md flex items-center gap-xs">
+                <span className="material-symbols-outlined text-[20px] text-secondary">forum</span> Chat Trends
+              </h2>
+              <div className="grid grid-cols-3 gap-sm">
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">TODAY</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.chat_trends.today}</p>
+                </div>
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">THIS WEEK</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.chat_trends.week}</p>
+                </div>
+                <div className="bg-surface-container-low p-md rounded-xl text-center">
+                  <p className="text-[10px] text-on-surface-variant font-bold mb-xs">THIS MONTH</p>
+                  <p className="text-headline-md text-primary font-bold">{analyticsInsights.chat_trends.month}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 3: Top Active Chats */}
+          <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex flex-col h-[400px]">
+            <h2 className="text-headline-sm text-primary font-semibold mb-lg flex items-center gap-xs">
+              <span className="material-symbols-outlined text-[20px] text-secondary">leaderboard</span> Most Active Chats
+            </h2>
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-md">
+              {analyticsInsights.top_chats.map((chat) => (
+                <div key={chat.session_id} className="flex justify-between items-center p-sm bg-surface-container-low rounded-xl border border-outline-variant/10">
+                  <div className="flex-1 min-w-0 pr-sm">
+                    <p className="text-body-sm text-primary font-semibold truncate">{chat.title}</p>
+                  </div>
+                  <span className="text-label-md bg-secondary/15 text-secondary px-sm py-xxs rounded-full font-bold shrink-0">
+                    {chat.message_count} messages
+                  </span>
+                </div>
+              ))}
+              {analyticsInsights.top_chats.length === 0 && (
+                <p className="text-body-sm text-on-surface-variant opacity-70 italic text-center py-xl">No active chats.</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Charts Row */}
@@ -111,10 +214,10 @@ export default function AdminPage() {
             <div className="mt-xl pt-lg border-t border-outline-variant/10">
               <div className="flex justify-between items-center">
                 <span className="text-body-sm text-on-surface-variant">Overall Uptime</span>
-                <span className="text-headline-sm text-secondary font-bold">{analytics.systemHealth}%</span>
+                <span className="text-headline-sm text-secondary font-bold">98%</span>
               </div>
               <div className="w-full bg-surface-dim h-2 rounded-full mt-sm overflow-hidden">
-                <div className="bg-secondary h-full rounded-full" style={{ width: `${analytics.systemHealth}%` }}></div>
+                <div className="bg-secondary h-full rounded-full" style={{ width: '98%' }}></div>
               </div>
             </div>
           </div>
