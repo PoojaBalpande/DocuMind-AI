@@ -252,17 +252,6 @@ function ChatPageContent() {
             ))
           )}
         </div>
-
-        {/* Storage */}
-        <div className="p-md border-t border-outline-variant/20">
-          <div className="bg-primary-container p-md rounded-xl text-on-primary-container">
-            <p className="text-label-md font-bold mb-xs">Storage Used</p>
-            <div className="w-full bg-surface-dim/30 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-secondary h-full w-[65%] rounded-full transition-all duration-500"></div>
-            </div>
-            <p className="text-[10px] mt-xs opacity-70">450 GB / 1 TB used</p>
-          </div>
-        </div>
       </div>
 
       {/* Chat Main Area */}
