@@ -14,6 +14,7 @@ export const memberService = {
   async getMembers(): Promise<Member[]> {
     const res = await fetch(`${API_BASE}/api/members`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch workspace members');
@@ -26,6 +27,7 @@ export const memberService = {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(data),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to invite member' }));
@@ -39,6 +41,7 @@ export const memberService = {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ role }),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to update member role' }));
@@ -51,6 +54,7 @@ export const memberService = {
     const res = await fetch(`${API_BASE}/api/members/${memberId}`, {
       method: 'DELETE',
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to remove member' }));

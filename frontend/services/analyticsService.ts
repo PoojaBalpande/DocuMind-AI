@@ -14,6 +14,7 @@ export const analyticsService = {
   async getWorkspaceOverview(): Promise<WorkspaceOverview> {
     const res = await fetch(`${API_BASE}/api/analytics/overview`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch workspace overview');

@@ -85,22 +85,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   initAuth: () => {
-    const token = authService.getToken();
-    if (!token) {
-      set({ isAuthenticated: false, user: null, isInitialized: true });
-      return;
-    }
-    // Validate token by calling /me
+    set({ isLoading: true });
     authService
       .getMe()
       .then((apiUser) => {
         const user = mapApiUser(apiUser);
-        set({ user, isAuthenticated: true, isInitialized: true });
+        set({ user, isAuthenticated: true, isInitialized: true, isLoading: false });
       })
       .catch(() => {
-        // Token invalid or expired — auto-logout
-        authService.removeToken();
-        set({ user: null, isAuthenticated: false, isInitialized: true });
+        set({ user: null, isAuthenticated: false, isInitialized: true, isLoading: false });
       });
   },
 

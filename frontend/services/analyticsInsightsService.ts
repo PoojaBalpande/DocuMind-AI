@@ -14,6 +14,7 @@ export const analyticsInsightsService = {
   async getInsights(): Promise<AnalyticsInsights> {
     const res = await fetch(`${API_BASE}/api/analytics/insights`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch workspace analytics insights');

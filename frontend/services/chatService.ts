@@ -44,6 +44,7 @@ export const chatService = {
   async getSessions(): Promise<ApiChatSession[]> {
     const res = await fetch(`${API_BASE}/api/chat/sessions`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch chat sessions');
@@ -56,6 +57,7 @@ export const chatService = {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ title }),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to create chat session');
@@ -66,6 +68,7 @@ export const chatService = {
   async getMessages(sessionId: string): Promise<Message[]> {
     const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}/messages`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch chat history');
@@ -113,6 +116,7 @@ export const chatService = {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(payload),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to send message' }));
@@ -126,6 +130,7 @@ export const chatService = {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ title }),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to rename session');
@@ -137,6 +142,7 @@ export const chatService = {
     const res = await fetch(`${API_BASE}/api/chat/sessions/${sessionId}`, {
       method: 'DELETE',
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to delete session');

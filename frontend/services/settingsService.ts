@@ -22,6 +22,7 @@ export const settingsService = {
   async getSettings(): Promise<UserSettings> {
     const res = await fetch(`${API_BASE}/api/settings`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to fetch settings' }));
@@ -35,6 +36,7 @@ export const settingsService = {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify(data),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to update settings' }));
@@ -47,6 +49,7 @@ export const settingsService = {
     const res = await fetch(`${API_BASE}/api/settings/reset`, {
       method: 'POST',
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to reset settings' }));

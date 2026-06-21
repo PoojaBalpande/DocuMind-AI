@@ -4,22 +4,15 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function getToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('documind-token');
-  }
   return null;
 }
 
 function setToken(token: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('documind-token', token);
-  }
+  // Cookie setting is handled on the backend via response headers
 }
 
 function removeToken(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('documind-token');
-  }
+  // Cookie deletion is handled on the backend via response headers
 }
 
 export interface ApiUser {
@@ -38,6 +31,7 @@ export const authService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Registration failed' }));
@@ -51,38 +45,33 @@ export const authService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Invalid credentials' }));
       throw new Error(err.detail || 'Login failed');
     }
     const data = await res.json();
-    setToken(data.access_token);
     return data;
   },
 
   async getMe(): Promise<ApiUser> {
-    const token = getToken();
-    if (!token) throw new Error('No token');
     const res = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     });
     if (!res.ok) {
-      removeToken();
       throw new Error('Session expired');
     }
     return res.json();
   },
 
   async logout(): Promise<void> {
-    const token = getToken();
-    if (token) {
-      await fetch(`${API_BASE}/api/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
-    }
-    removeToken();
+    await fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    }).catch(() => {});
   },
 
   getToken,

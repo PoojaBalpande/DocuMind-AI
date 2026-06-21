@@ -27,6 +27,7 @@ export const documentService = {
   async getDocuments(): Promise<{ documents: ApiDocument[]; total: number }> {
     const res = await fetch(`${API_BASE}/api/documents`, {
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error('Failed to fetch documents');
@@ -42,6 +43,7 @@ export const documentService = {
       method: 'POST',
       headers: authHeaders(),
       body: formData,
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Upload failed' }));
@@ -54,6 +56,7 @@ export const documentService = {
     const res = await fetch(`${API_BASE}/api/documents/${id}`, {
       method: 'DELETE',
       headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Delete failed' }));
