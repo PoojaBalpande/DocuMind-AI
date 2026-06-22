@@ -1,7 +1,9 @@
 """WorkspaceMember schemas — Pydantic request/response models for team members."""
 
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.core.validators import validate_non_empty_string, strip_whitespace
 
 
 class MemberResponse(BaseModel):
@@ -22,6 +24,12 @@ class CreateMemberRequest(BaseModel):
     member_name: str = Field(..., min_length=1, max_length=255)
     member_email: EmailStr
     role: str = Field("viewer", pattern="^(owner|admin|member|viewer)$")
+
+    @field_validator("member_name")
+    @classmethod
+    def check_member_name(cls, v: str) -> str:
+        v = strip_whitespace(v)
+        return validate_non_empty_string(v)
 
 
 class UpdateMemberRoleRequest(BaseModel):

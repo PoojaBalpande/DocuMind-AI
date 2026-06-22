@@ -6,15 +6,29 @@ ChatAskSource enriched with document_id, chunk_id, snippet, similarity_score.
 
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.core.validators import validate_non_empty_string, strip_whitespace, validate_uuid_format
 
 
 class ChatSessionCreate(BaseModel):
-    title: str = Field(default="New Chat", max_length=255)
+    title: str = Field(default="New Chat", min_length=1, max_length=255)
+
+    @field_validator("title")
+    @classmethod
+    def check_title(cls, v: str) -> str:
+        v = strip_whitespace(v)
+        return validate_non_empty_string(v)
 
 
 class ChatSessionUpdate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
+
+    @field_validator("title")
+    @classmethod
+    def check_title(cls, v: str) -> str:
+        v = strip_whitespace(v)
+        return validate_non_empty_string(v)
 
 
 class ChatSessionResponse(BaseModel):
@@ -47,9 +61,38 @@ class MessageResponse(BaseModel):
 
 class ChatAskRequest(BaseModel):
     session_id: str
-    message: str
+    message: str = Field(..., min_length=1, max_length=5000)
     document_id: str | None = None  # V8: None = multi-doc, str = single-doc
-    document_ids: list[str] | None = None  # V8 Phase 2: list of document IDs for scope filtering
+    document_ids: list[str] | None = Field(default=None, max_length=20)  # V8 Phase 2: list of document IDs for scope filtering
+
+    @field_validator("session_id")
+    @classmethod
+    def check_session_id(cls, v: str) -> str:
+        return validate_uuid_format(v)
+
+    @field_validator("document_id")
+    @classmethod
+    def check_document_id(cls, v: str | None) -> str | None:
+        if v is not None:
+            return validate_uuid_format(v)
+        return v
+
+    @field_validator("document_ids")
+    @classmethod
+    def check_document_ids(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None:
+            if len(v) > 20:
+                raise ValueError("document_ids list cannot exceed 20 items")
+            for doc_id in v:
+                validate_uuid_format(doc_id)
+        return v
+
+    @field_validator("message")
+    @classmethod
+    def check_message(cls, v: str) -> str:
+        v = strip_whitespace(v)
+        return validate_non_empty_string(v)
+
 
 
 class ChatAskSource(BaseModel):
