@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.validators import validate_uuid
 from app.models.user import User
+from app.models.document import Document
 from app.models.chat import ChatSession, Message
 from app.schemas.chat import (
     ChatSessionCreate,
@@ -19,6 +21,30 @@ from app.schemas.chat import (
 from app.services.rag.rag_pipeline import run_rag_pipeline
 
 router = APIRouter()
+
+
+def _validate_document_ownership(
+    db: Session, user_id: str, document_ids: list[str] | None
+) -> None:
+    """Verify all document_ids belong to the authenticated user.
+
+    Raises HTTPException 404 if any document_id is not found or not owned.
+    Uses a uniform 'not found' message to avoid leaking existence information.
+    """
+    if not document_ids:
+        return
+    for doc_id in document_ids:
+        validate_uuid(doc_id, "document_id")
+    owned_count = (
+        db.query(Document.id)
+        .filter(Document.id.in_(document_ids), Document.user_id == user_id)
+        .count()
+    )
+    if owned_count != len(document_ids):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="One or more documents not found",
+        )
 
 
 @router.get("/sessions", response_model=list[ChatSessionResponse])
@@ -87,6 +113,9 @@ def ask_question(
     doc_ids = data.document_ids
     if doc_ids is None and data.document_id is not None:
         doc_ids = [data.document_id]
+
+    # Validate document ownership before passing to retriever
+    _validate_document_ownership(db, current_user.id, doc_ids)
 
     # 2. Run the RAG pipeline (V8 Phase 2: pass document_ids list for retrieval mode control)
     result = run_rag_pipeline(db, current_user.id, data.message, document_ids=doc_ids)
@@ -171,6 +200,9 @@ def ask_question_stream(
     doc_ids = data.document_ids
     if doc_ids is None and data.document_id is not None:
         doc_ids = [data.document_id]
+
+    # Validate document ownership before passing to retriever
+    _validate_document_ownership(db, current_user.id, doc_ids)
 
     # 2. Retrieve top chunks using user-configured settings
     from app.services.settings_service import SettingsService
@@ -353,6 +385,7 @@ def get_session_messages(
     db: Session = Depends(get_db),
 ):
     """Retrieve chat history (messages) for a specific session."""
+    validate_uuid(session_id, "session_id")
     # 1. Validate session ownership
     session = (
         db.query(ChatSession)
@@ -388,6 +421,7 @@ def update_session(
     db: Session = Depends(get_db),
 ):
     """Update (rename) a chat session."""
+    validate_uuid(session_id, "session_id")
     session = (
         db.query(ChatSession)
         .filter(
@@ -416,6 +450,7 @@ def delete_session_endpoint(
     db: Session = Depends(get_db),
 ):
     """Soft delete a chat session."""
+    validate_uuid(session_id, "session_id")
     session = (
         db.query(ChatSession)
         .filter(

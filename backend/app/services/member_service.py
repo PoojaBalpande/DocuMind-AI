@@ -24,6 +24,10 @@ class MemberService:
     @staticmethod
     def invite_member(db: Session, user_id: str, data: CreateMemberRequest) -> WorkspaceMember:
         """Create a new member record with status 'pending'."""
+        # Block owner role assignment via invite — owner is implicit for workspace creator only
+        if data.role == "owner":
+            raise ValueError("Cannot assign owner role via invite")
+
         # Check if an active or pending member with the same email already exists for this user
         existing = (
             db.query(WorkspaceMember)

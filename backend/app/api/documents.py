@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import get_current_user
+from app.core.validators import validate_uuid
 from app.models.user import User
 from app.models.document import Document
 from app.schemas.document import DocumentResponse, DocumentListResponse, UploadResponse
@@ -108,6 +109,7 @@ def get_document_file(
     db: Session = Depends(get_db),
 ):
     """Serve the PDF file associated with a document_id safely."""
+    validate_uuid(document_id, "document_id")
     from fastapi.responses import FileResponse
     document = (
         db.query(Document)
@@ -136,6 +138,7 @@ def delete_document(
     db: Session = Depends(get_db),
 ):
     """Delete a document — removes the file from disk and the database record."""
+    validate_uuid(document_id, "document_id")
     document = (
         db.query(Document)
         .filter(Document.id == document_id, Document.user_id == current_user.id)

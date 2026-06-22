@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.validators import validate_uuid
 from app.models.user import User
 from app.schemas.workspace_member import (
     MemberResponse,
@@ -49,6 +50,7 @@ def update_member_role(
     db: Session = Depends(get_db),
 ):
     """Update role for a specific workspace member."""
+    validate_uuid(id, "member_id")
     try:
         return MemberService.update_role(db, current_user.id, id, data.role)
     except KeyError as e:
@@ -70,6 +72,7 @@ def remove_member(
     db: Session = Depends(get_db),
 ):
     """Soft remove a member from the workspace."""
+    validate_uuid(id, "member_id")
     try:
         return MemberService.remove_member(db, current_user.id, id)
     except KeyError as e:
