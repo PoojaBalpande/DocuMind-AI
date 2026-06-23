@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import get_current_user
-from app.core.validators import validate_uuid
+from app.core.validators import validate_uuid, sanitize_filename, validate_pdf_structure, stream_validate_and_save
 from app.models.user import User
 from app.models.document import Document
 from app.schemas.document import DocumentResponse, DocumentListResponse, UploadResponse
@@ -48,42 +48,50 @@ async def upload_document(
     db: Session = Depends(get_db),
 ):
     """Upload a PDF document and trigger asynchronous text ingestion."""
-    # Validate MIME type
-    if file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file type: {file.content_type}. Only PDF files are accepted.",
-        )
-
-    # Read file content
-    content = await file.read()
-    file_size = len(content)
-
-    # Validate file size
-    if file_size > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB} MB.",
-        )
-
-    # Generate unique filename
-    ext = Path(file.filename).suffix if file.filename else ".pdf"
-    unique_filename = f"{uuid.uuid4()}{ext}"
-
-    # Ensure upload directory exists
-    upload_dir = Path(settings.UPLOAD_DIR)
+    # 1. Resolve and validate directory paths to prevent traversal
+    upload_dir = Path(settings.UPLOAD_DIR).resolve()
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save file to disk
-    file_path = upload_dir / unique_filename
-    with open(file_path, "wb") as f:
-        f.write(content)
+    # Force storage filename to strictly use UUID with .pdf extension
+    unique_filename = f"{uuid.uuid4()}.pdf"
+    file_path = (upload_dir / unique_filename).resolve()
 
-    # Store metadata in database (status="processing")
+    if not str(file_path).startswith(str(upload_dir)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid destination path.",
+        )
+
+    # 2. Stream, validate size & magic bytes, and write to disk
+    try:
+        file_size = await stream_validate_and_save(file, str(file_path), MAX_UPLOAD_BYTES)
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An error occurred while uploading the file.",
+        )
+
+    # 3. Structural Validation (Verifying fitz can read/parse pages)
+    try:
+        validate_pdf_structure(str(file_path))
+    except Exception as e:
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+        raise e
+
+    # 4. Filename Sanitization to prevent XSS / path traversal in DB metadata
+    sanitized_original_filename = sanitize_filename(file.filename)
+
+    # 5. Store metadata in database (status="processing")
     document = Document(
         user_id=current_user.id,
         filename=unique_filename,
-        original_filename=file.filename or "untitled.pdf",
+        original_filename=sanitized_original_filename,
         file_size=file_size,
         storage_path=str(file_path),
         status="processing",
@@ -99,6 +107,7 @@ async def upload_document(
         id=document.id,
         status=document.status,
     )
+
 
 
 @router.get("/{document_id}/file")
