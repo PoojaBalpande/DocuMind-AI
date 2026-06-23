@@ -252,31 +252,20 @@ function ChatPageContent() {
             ))
           )}
         </div>
-
-        {/* Storage */}
-        <div className="p-md border-t border-outline-variant/20">
-          <div className="bg-primary-container p-md rounded-xl text-on-primary-container">
-            <p className="text-label-md font-bold mb-xs">Storage Used</p>
-            <div className="w-full bg-surface-dim/30 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-secondary h-full w-[65%] rounded-full transition-all duration-500"></div>
-            </div>
-            <p className="text-[10px] mt-xs opacity-70">450 GB / 1 TB used</p>
-          </div>
-        </div>
       </div>
 
       {/* Chat Main Area */}
       {documents.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center p-xl text-center bg-surface-container-lowest/50 h-full">
-          <div className="max-w-md p-xl bg-white rounded-3xl border border-outline-variant/20 shadow-md flex flex-col items-center gap-md">
-            <span className="material-symbols-outlined text-[64px] text-secondary">picture_as_pdf</span>
-            <h3 className="text-headline-md text-primary font-bold">Upload a document to start chatting</h3>
-            <p className="text-body-md text-on-surface-variant">
+          <div className="w-full max-w-[448px] p-xl bg-white rounded-3xl border border-outline-variant/20 shadow-md flex flex-col gap-md text-center">
+            <span className="material-symbols-outlined text-[64px] text-secondary self-center">picture_as_pdf</span>
+            <h3 className="w-full text-headline-md text-primary font-bold">Upload a document to start chatting</h3>
+            <p className="w-full text-body-md text-on-surface-variant">
               DocuMind AI requires PDF documents in the Knowledge Base to retrieve grounded answers and citations.
             </p>
             <a
               href="/documents"
-              className="primary-gradient text-on-primary px-lg py-sm rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 flex items-center gap-xs"
+              className="self-center primary-gradient text-on-primary px-lg py-sm rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 flex items-center gap-xs"
             >
               <span className="material-symbols-outlined text-[18px]">upload_file</span>
               Go to Knowledge Base
@@ -444,8 +433,8 @@ function ChatPageContent() {
                   <button
                     onClick={() => setRetrievalScope('workspace')}
                     className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'workspace'
-                        ? 'bg-secondary text-on-secondary shadow-sm'
-                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      ? 'bg-secondary text-on-secondary shadow-sm'
+                      : 'text-on-surface-variant hover:bg-surface-variant/30'
                       }`}
                   >
                     Entire Workspace
@@ -453,8 +442,8 @@ function ChatPageContent() {
                   <button
                     onClick={() => setRetrievalScope('current')}
                     className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'current'
-                        ? 'bg-secondary text-on-secondary shadow-sm'
-                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      ? 'bg-secondary text-on-secondary shadow-sm'
+                      : 'text-on-surface-variant hover:bg-surface-variant/30'
                       }`}
                   >
                     Current Document
@@ -462,8 +451,8 @@ function ChatPageContent() {
                   <button
                     onClick={() => setRetrievalScope('selected')}
                     className={`px-md py-xs rounded-lg text-label-md font-semibold transition-all ${retrievalScope === 'selected'
-                        ? 'bg-secondary text-on-secondary shadow-sm'
-                        : 'text-on-surface-variant hover:bg-surface-variant/30'
+                      ? 'bg-secondary text-on-secondary shadow-sm'
+                      : 'text-on-surface-variant hover:bg-surface-variant/30'
                       }`}
                   >
                     Selected Documents
@@ -518,8 +507,8 @@ function ChatPageContent() {
                         <label
                           key={doc.id}
                           className={`flex items-center gap-sm p-sm rounded-xl border cursor-pointer select-none transition-all ${isSelected
-                              ? 'bg-secondary/10 border-secondary/40 text-secondary'
-                              : 'bg-white border-outline-variant/20 text-on-surface-variant hover:bg-surface-variant/10'
+                            ? 'bg-secondary/10 border-secondary/40 text-secondary'
+                            : 'bg-white border-outline-variant/20 text-on-surface-variant hover:bg-surface-variant/10'
                             }`}
                         >
                           <input

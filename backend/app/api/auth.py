@@ -1,8 +1,9 @@
 """Authentication API endpoints — register, login, me, logout."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user, verify_google_token
 from app.models.user import User
@@ -34,7 +35,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+def login(response: Response, data: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate and return a JWT access token."""
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.hashed_password):
@@ -49,6 +50,16 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         )
 
     access_token = create_access_token(data={"sub": user.id})
+    is_development = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=not is_development,
+        samesite="strict",
+        path="/",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
     return TokenResponse(access_token=access_token)
 
 
@@ -59,8 +70,15 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout():
+def logout(response: Response):
     """Logout — frontend removes the token. This endpoint confirms success."""
+    is_development = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        secure=not is_development,
+        samesite="strict",
+    )
     return {"message": "Logged out successfully"}
 
 

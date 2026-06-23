@@ -39,11 +39,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface flex">
       <Sidebar />
-      <main className="ml-[280px] min-h-screen flex flex-col">
+      <main className="ml-[280px] flex-1 min-h-screen flex flex-col min-w-0">
         <TopNavbar />
-        <div className="flex-1 custom-scrollbar">{children}</div>
+        <div className="flex-1 w-full min-w-0 custom-scrollbar">{children}</div>
       </main>
     </div>
   );

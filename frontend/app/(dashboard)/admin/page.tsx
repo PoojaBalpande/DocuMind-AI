@@ -127,9 +127,9 @@ export default function AdminPage() {
           </div>
 
           {/* Column 2: Trends */}
-          <div className="space-y-lg flex flex-col h-[400px] justify-between">
+          <div className="flex flex-col gap-lg">
             {/* Upload Trends */}
-            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex-1 flex flex-col justify-center">
+            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex flex-col justify-center">
               <h2 className="text-headline-sm text-primary font-semibold mb-md flex items-center gap-xs">
                 <span className="material-symbols-outlined text-[20px] text-secondary">trending_up</span> Upload Trends
               </h2>
@@ -149,7 +149,7 @@ export default function AdminPage() {
               </div>
             </div>
             {/* Chat Trends */}
-            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex-1 flex flex-col justify-center">
+            <div className="bg-surface-container-lowest rounded-2xl p-xl border border-outline-variant/20 flex flex-col justify-center">
               <h2 className="text-headline-sm text-primary font-semibold mb-md flex items-center gap-xs">
                 <span className="material-symbols-outlined text-[20px] text-secondary">forum</span> Chat Trends
               </h2>
