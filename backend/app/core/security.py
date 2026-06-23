@@ -84,3 +84,57 @@ def get_current_user(
             detail="User account is disabled",
         )
     return user
+
+
+# ── Google OAuth Token Verification ──────────────────────────────
+
+def verify_google_token(id_token_str: str) -> dict:
+    """Verify a Google ID token. In development, accepts 'mock_google_token:<email>:<sub_id>:<name>'."""
+    if settings.ENVIRONMENT != "production":
+        if id_token_str.startswith("mock_google_token:"):
+            parts = id_token_str.split(":")
+            email = parts[1] if len(parts) >= 2 else "test@example.com"
+            sub = parts[2] if len(parts) >= 3 else "12345"
+            name = parts[3] if len(parts) >= 4 else "Google User"
+            return {
+                "iss": "https://accounts.google.com",
+                "aud": settings.GOOGLE_CLIENT_ID or "mock-client-id",
+                "sub": sub,
+                "email": email,
+                "name": name,
+                "email_verified": True
+            }
+        elif id_token_str.startswith("mock_google_token_"):
+            parts = id_token_str.split("_")
+            email = parts[3] if len(parts) >= 4 else "test@example.com"
+            sub = parts[4] if len(parts) >= 5 else "12345"
+            name = parts[5].replace("-", " ") if len(parts) >= 6 else "Google User"
+            return {
+                "iss": "https://accounts.google.com",
+                "aud": settings.GOOGLE_CLIENT_ID or "mock-client-id",
+                "sub": sub,
+                "email": email,
+                "name": name,
+                "email_verified": True
+            }
+
+
+    # Real Google ID token verification
+    from google.oauth2 import id_token
+    from google.auth.transport import requests
+
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_ID.strip():
+        raise ValueError("GOOGLE_CLIENT_ID is not configured.")
+
+    try:
+        id_info = id_token.verify_oauth2_token(
+            id_token_str, requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
+    except Exception as e:
+        raise ValueError(f"Google token verification failed: {str(e)}")
+
+    if id_info.get("iss") not in ["accounts.google.com", "https://accounts.google.com"]:
+        raise ValueError("Invalid issuer")
+
+    return id_info
+

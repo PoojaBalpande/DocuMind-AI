@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     OPENAI_API_KEY: str = ""
+    GOOGLE_CLIENT_ID: str = ""
     ALGORITHM: str = "HS256"
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     OLLAMA_MODEL: str = "qwen3:8b"
@@ -65,6 +66,8 @@ class Settings(BaseSettings):
                     "This is insecure when allow_credentials=True. "
                     "Set explicit origins instead."
                 )
+            if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_ID.strip():
+                errors.append("GOOGLE_CLIENT_ID is missing or empty in production mode.")
 
         # Non-fatal warnings
         if not self.OPENAI_API_KEY:

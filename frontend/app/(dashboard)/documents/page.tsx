@@ -64,15 +64,14 @@ export default function DocumentsPage() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={() => setIsDragOver(false)}
-          className={`border-2 border-dashed rounded-2xl p-xxl text-center transition-all duration-300 ${
-            isDragOver ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-outline-variant/40 hover:border-secondary/40'
-          }`}
+          className={`border-2 border-dashed rounded-2xl p-xxl text-center transition-all duration-300 ${isDragOver ? 'border-secondary bg-secondary/5 scale-[1.01]' : 'border-outline-variant/40 hover:border-secondary/40'
+            }`}
         >
           <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-md block">cloud_upload</span>
           <p className="text-body-md text-on-surface-variant mb-xs">
             {isDragOver ? 'Drop files here...' : 'Drag & drop documents here, or click Upload above'}
           </p>
-          <p className="text-label-md text-on-surface-variant/60">Supports PDF, DOCX, TXT, MD — Max 50 MB per file</p>
+          <p className="text-label-md text-on-surface-variant/60">Supports only PDF — Max 50 MB per file</p>
           {isUploading && (
             <div className="mt-md flex items-center justify-center gap-sm text-secondary">
               <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -102,9 +101,8 @@ export default function DocumentsPage() {
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
-                  className={`px-md py-xs rounded-md text-label-lg font-semibold capitalize transition-all ${
-                    filterStatus === status ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-variant/30'
-                  }`}
+                  className={`px-md py-xs rounded-md text-label-lg font-semibold capitalize transition-all ${filterStatus === status ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-variant/30'
+                    }`}
                 >
                   {status}
                 </button>

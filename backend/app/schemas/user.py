@@ -34,6 +34,10 @@ class LoginRequest(BaseModel):
 
 
 
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -47,5 +51,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     created_at: datetime
     updated_at: datetime
+    oauth_provider: str | None = None
+    google_sub: str | None = None
 
     model_config = {"from_attributes": True}

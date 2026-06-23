@@ -61,6 +61,22 @@ export const authService = {
     return data;
   },
 
+  async googleLogin(idToken: string): Promise<{ access_token: string; token_type: string }> {
+    const res = await fetch(`${API_BASE}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Google login failed' }));
+      throw new Error(err.detail || 'Google login failed');
+    }
+    const data = await res.json();
+    setToken(data.access_token);
+    return data;
+  },
+
+
   async getMe(): Promise<ApiUser> {
     const token = getToken();
     if (!token) throw new Error('No token');
