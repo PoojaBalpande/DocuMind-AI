@@ -215,6 +215,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(bodyPayload),
+        credentials: 'include',
         signal: abortController.signal,
       });
 

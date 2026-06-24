@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { authService } from '@/services/authService';
 import { useCitation } from '@/contexts/CitationContext';
 import { Document, Page, pdfjs } from 'react-pdf';
 import Mark from 'mark.js';
@@ -94,13 +93,10 @@ export default function PdfViewer({
   useEffect(() => {
     if (!documentId) return;
 
-    const token = authService.getToken();
     let createdUrl: string | null = null;
 
     fetch(`${API_BASE}/api/documents/${documentId}/file`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: 'include',
     })
       .then((res) => {
         if (!res.ok) {
