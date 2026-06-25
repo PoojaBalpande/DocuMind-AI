@@ -12,6 +12,31 @@ from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserR
 router = APIRouter()
 
 
+def _set_access_cookie(response: Response, access_token: str) -> None:
+    """Set the access_token cookie with production-safe defaults from config."""
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        domain=settings.COOKIE_DOMAIN or None,
+        path="/",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+
+def _delete_access_cookie(response: Response) -> None:
+    """Delete the access_token cookie, matching the attributes used to set it."""
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        domain=settings.COOKIE_DOMAIN or None,
+    )
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     """Create a new user account."""
@@ -50,16 +75,7 @@ def login(response: Response, data: LoginRequest, db: Session = Depends(get_db))
         )
 
     access_token = create_access_token(data={"sub": user.id})
-    is_development = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=not is_development,
-        samesite="strict",
-        path="/",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-    )
+    _set_access_cookie(response, access_token)
     return TokenResponse(access_token=access_token)
 
 
@@ -71,19 +87,13 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.post("/logout")
 def logout(response: Response):
-    """Logout — frontend removes the token. This endpoint confirms success."""
-    is_development = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
-    response.delete_cookie(
-        key="access_token",
-        path="/",
-        secure=not is_development,
-        samesite="strict",
-    )
+    """Logout — clear the access_token cookie."""
+    _delete_access_cookie(response)
     return {"message": "Logged out successfully"}
 
 
 @router.post("/google", response_model=TokenResponse)
-def google_login(data: GoogleLoginRequest, db: Session = Depends(get_db)):
+def google_login(response: Response, data: GoogleLoginRequest, db: Session = Depends(get_db)):
     """Authenticate via Google ID token."""
     try:
         payload = verify_google_token(data.id_token)
@@ -134,5 +144,6 @@ def google_login(data: GoogleLoginRequest, db: Session = Depends(get_db)):
 
     # Issue DocuMind access token
     access_token = create_access_token(data={"sub": user.id})
+    _set_access_cookie(response, access_token)
     return TokenResponse(access_token=access_token)
 

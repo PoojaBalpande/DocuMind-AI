@@ -12,12 +12,14 @@ from app.core.config import settings
 from app.api import auth, documents, chat, analytics, members
 from app.api import settings as settings_api
 
+is_production = settings.ENVIRONMENT == "production"
+
 app = FastAPI(
     title="DocuMind AI API",
     description="AI-powered document intelligence platform API",
     version="2.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url=None if is_production else "/api/docs",
+    redoc_url=None if is_production else "/api/redoc",
 )
 
 # CORS — allow frontend origin

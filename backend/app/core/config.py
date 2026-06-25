@@ -8,6 +8,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 MIN_SECRET_KEY_LENGTH = 32
+VALID_SAMESITE_VALUES = {"strict", "lax", "none"}
 
 
 class Settings(BaseSettings):
@@ -24,6 +25,11 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Cookie configuration
+    COOKIE_SECURE: bool = True   # Set to False for local development (HTTP)
+    COOKIE_SAMESITE: str = "lax"  # "strict", "lax", or "none"
+    COOKIE_DOMAIN: str = ""       # e.g. ".yourdomain.com" for cross-subdomain
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
@@ -33,6 +39,9 @@ class Settings(BaseSettings):
     # Upload
     UPLOAD_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "uploads")
     MAX_UPLOAD_SIZE_MB: int = 50
+
+    # ChromaDB (vector store)
+    CHROMA_DB_PATH: str = "./chroma"
 
     model_config = {
         "env_file": str(Path(__file__).resolve().parent.parent.parent / ".env"),
@@ -58,6 +67,13 @@ class Settings(BaseSettings):
         if not self.DATABASE_URL or not self.DATABASE_URL.strip():
             errors.append("DATABASE_URL is missing or empty.")
 
+        # Cookie SameSite validation
+        if self.COOKIE_SAMESITE.lower() not in VALID_SAMESITE_VALUES:
+            errors.append(
+                f"COOKIE_SAMESITE='{self.COOKIE_SAMESITE}' is invalid. "
+                f"Must be one of: {', '.join(VALID_SAMESITE_VALUES)}"
+            )
+
         # Production-specific checks
         if self.ENVIRONMENT == "production":
             if "*" in self.CORS_ORIGINS:
@@ -68,6 +84,11 @@ class Settings(BaseSettings):
                 )
             if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_ID.strip():
                 errors.append("GOOGLE_CLIENT_ID is missing or empty in production mode.")
+            if not self.COOKIE_SECURE:
+                logger.warning(
+                    "COOKIE_SECURE=False in production mode. "
+                    "Cookies will NOT require HTTPS. This is insecure."
+                )
 
         # Non-fatal warnings
         if not self.OPENAI_API_KEY:

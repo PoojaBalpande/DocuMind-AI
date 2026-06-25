@@ -1,9 +1,12 @@
 """Local Hugging Face embedding service using sentence-transformers."""
 
+import logging
 from sentence_transformers import SentenceTransformer
 
-print("Initializing SentenceTransformer model 'BAAI/bge-small-en-v1.5' globally...")
-model = SentenceTransformer("BAAI/bge-small-en-v1.5", local_files_only=True)
+logger = logging.getLogger(__name__)
+
+logger.info("Initializing SentenceTransformer model 'BAAI/bge-small-en-v1.5'...")
+model = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
 
 def generate_embedding(text: str) -> list[float]:

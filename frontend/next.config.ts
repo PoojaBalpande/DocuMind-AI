@@ -1,15 +1,21 @@
 import type { NextConfig } from "next";
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 let parsedOrigin = '';
 try {
   parsedOrigin = new URL(apiBase).origin;
 } catch {
   // If apiBase is just a path or invalid URL, fallback to default dev backend port
-  parsedOrigin = 'http://localhost:8001 http://127.0.0.1:8001';
+  parsedOrigin = 'http://localhost:8000';
 }
 
 const isDev = process.env.NODE_ENV === 'development';
+
+// Development: allow all common localhost ports for API access
+// Production: only allow the configured API origin (via NEXT_PUBLIC_API_URL)
+const connectSrc = isDev
+  ? `connect-src 'self' blob: ${parsedOrigin} http://localhost:8000 http://localhost:8001 http://127.0.0.1:8000 http://127.0.0.1:8001`
+  : `connect-src 'self' blob: ${parsedOrigin}`;
 
 const cspDirectives = [
   "default-src 'self'",
@@ -17,7 +23,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
-  `connect-src 'self' blob: ${parsedOrigin} http://localhost:8001 http://127.0.0.1:8001`,
+  connectSrc,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
