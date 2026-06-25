@@ -18,9 +18,11 @@ from app.schemas.chat import (
     ChatAskResponse,
     MessageResponse,
 )
+import logging
 from app.services.rag.rag_pipeline import run_rag_pipeline
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _validate_document_ownership(
@@ -86,6 +88,15 @@ def ask_question(
     db: Session = Depends(get_db),
 ):
     """Ask a question grounded in the user's uploaded documents."""
+    import time
+    start_time = time.time()
+    
+    doc_ids = data.document_ids
+    if doc_ids is None and data.document_id is not None:
+        doc_ids = [data.document_id]
+        
+    logger.info(f"Chat query received: session_id={data.session_id}, user_id={current_user.id}, target_documents={doc_ids}")
+    
     session = (
         db.query(ChatSession)
         .filter(
@@ -96,6 +107,7 @@ def ask_question(
         .first()
     )
     if not session:
+        logger.warning(f"Chat query failed: session_id={data.session_id} not found or not owned by user_id={current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found",
@@ -109,16 +121,19 @@ def ask_question(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # Resolve document_ids (supporting both singular and plural for backward compatibility)
-    doc_ids = data.document_ids
-    if doc_ids is None and data.document_id is not None:
-        doc_ids = [data.document_id]
-
     # Validate document ownership before passing to retriever
-    _validate_document_ownership(db, current_user.id, doc_ids)
+    try:
+        _validate_document_ownership(db, current_user.id, doc_ids)
+    except HTTPException as e:
+        logger.warning(f"Chat query failed: document ownership validation failed for user_id={current_user.id}")
+        raise e
 
     # 2. Run the RAG pipeline (V8 Phase 2: pass document_ids list for retrieval mode control)
-    result = run_rag_pipeline(db, current_user.id, data.message, document_ids=doc_ids)
+    try:
+        result = run_rag_pipeline(db, current_user.id, data.message, document_ids=doc_ids)
+    except Exception as e:
+        logger.error(f"Chat query failed: RAG pipeline execution error for user_id={current_user.id}. Error: {str(e)}")
+        raise e
 
     # 3. Store the user's query
     user_message = Message(
@@ -145,6 +160,10 @@ def ask_question(
     # 5. Commit messages to DB
     db.commit()
 
+    sources_count = len(result["sources"])
+    duration = time.time() - start_time
+    logger.info(f"Chat query completed: session_id={data.session_id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider=Ollama, citations={sources_count}")
+
     return ChatAskResponse(
         answer=result["answer"],
         sources=result["sources"],
@@ -163,6 +182,7 @@ def ask_question_stream(
     from fastapi.responses import StreamingResponse
     import json
     import requests
+    import time
     from app.core.config import settings
     from app.models.chat import Message
     from app.services.rag.retriever import retrieve_relevant_chunks
@@ -172,6 +192,13 @@ def ask_question_stream(
         build_reasoning_prompt,
         build_document_contributions,
     )
+
+    start_time = time.time()
+    doc_ids = data.document_ids
+    if doc_ids is None and data.document_id is not None:
+        doc_ids = [data.document_id]
+
+    logger.info(f"Chat stream query received: session_id={data.session_id}, user_id={current_user.id}, target_documents={doc_ids}")
 
     session = (
         db.query(ChatSession)
@@ -183,6 +210,7 @@ def ask_question_stream(
         .first()
     )
     if not session:
+        logger.warning(f"Chat stream query failed: session_id={data.session_id} not found or not owned by user_id={current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found",
@@ -196,13 +224,12 @@ def ask_question_stream(
         session.title = new_title
     session.updated_at = datetime.now(timezone.utc)
 
-    # Resolve document_ids (supporting both singular and plural for backward compatibility)
-    doc_ids = data.document_ids
-    if doc_ids is None and data.document_id is not None:
-        doc_ids = [data.document_id]
-
     # Validate document ownership before passing to retriever
-    _validate_document_ownership(db, current_user.id, doc_ids)
+    try:
+        _validate_document_ownership(db, current_user.id, doc_ids)
+    except HTTPException as e:
+        logger.warning(f"Chat stream query failed: document ownership validation failed for user_id={current_user.id}")
+        raise e
 
     # 2. Retrieve top chunks using user-configured settings
     from app.services.settings_service import SettingsService
@@ -212,9 +239,7 @@ def ask_question_stream(
         db, current_user.id, data.message, limit=limit, document_ids=doc_ids
     )
 
-    print("===== RETRIEVED CHUNKS =====")
-    for chunk in chunks:
-        print(chunk)
+    logger.debug(f"===== RETRIEVED CHUNKS =====\n{chunks}")
 
     # 3. Format citations with enriched metadata (V8: chunk_id + similarity_score)
     sources = []
@@ -232,16 +257,16 @@ def ask_question_stream(
     intent = detect_reasoning_intent(data.message)
     context = format_document_context(chunks)
 
-    print("===== FORMATTED CONTEXT =====")
-    print(context)
+    logger.debug(f"===== FORMATTED CONTEXT =====\n{context}")
 
     prompt = build_reasoning_prompt(intent, data.message, context)
 
-    print("===== FINAL PROMPT =====")
-    print(prompt)
+    logger.debug(f"===== FINAL PROMPT =====\n{prompt}")
 
     contributions = build_document_contributions(chunks)
     contributions_dump = [c.model_dump(mode="json") for c in contributions]
+
+    logger.info(f"Chat stream retrieval: session_id={data.session_id}, user_id={current_user.id}, retrieved_chunks={len(chunks)}, success={len(chunks) > 0}")
 
     def event_generator():
         # First send citations
@@ -279,6 +304,8 @@ def ask_question_stream(
             )
             db.add(assistant_message)
             db.commit()
+            duration = time.time() - start_time
+            logger.info(f"Chat stream completed (no chunks): session_id={session.id}, duration={duration:.3f}s, citations=0")
             return
 
         # 5. Generate stream from Ollama
@@ -297,11 +324,8 @@ If the context does not contain enough information to address the question, or i
 Do not hallucinate.
 Do not use external knowledge."""
 
-        print("===== SYSTEM PROMPT SENT =====")
-        print(system_prompt)
-
-        print("===== USER PROMPT SENT =====")
-        print(prompt)
+        logger.debug(f"===== SYSTEM PROMPT SENT =====\n{system_prompt}")
+        logger.debug(f"===== USER PROMPT SENT =====\n{prompt}")
 
         payload = {
             "model": settings.OLLAMA_MODEL,
@@ -320,6 +344,7 @@ Do not use external knowledge."""
         chunk_count = 0
         try:
             # Query Ollama model with stream=True
+            logger.info(f"Querying streaming Ollama model {settings.OLLAMA_MODEL}...")
             response = requests.post(url, json=payload, stream=True, timeout=300)
             response.raise_for_status()
             for line in response.iter_lines(chunk_size=1):
@@ -328,11 +353,11 @@ Do not use external knowledge."""
                     token = chunk_data.get("message", {}).get("content", "")
                     full_answer += token
                     chunk_count += 1
-                    print(f"[BACKEND STREAM] Sent chunk #{chunk_count}: '{token}'")
+                    logger.debug(f"[BACKEND STREAM] Sent chunk #{chunk_count}: '{token}'")
                     yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
-            print(f"[BACKEND STREAM] Stream finished. Total chunks sent: {chunk_count}")
+            logger.debug(f"[BACKEND STREAM] Stream finished. Total chunks sent: {chunk_count}")
         except Exception as e:
-            print(f"[BACKEND STREAM] Primary model failed: {e}. Trying fallback model...")
+            logger.warning(f"[BACKEND STREAM] Primary model failed: {e}. Trying fallback model...")
             # Try fallback model
             payload["model"] = "qwen2.5-coder:7b"
             fallback_chunk_count = 0
@@ -345,11 +370,11 @@ Do not use external knowledge."""
                         token = chunk_data.get("message", {}).get("content", "")
                         full_answer += token
                         fallback_chunk_count += 1
-                        print(f"[BACKEND STREAM] Sent fallback chunk #{fallback_chunk_count}: '{token}'")
+                        logger.debug(f"[BACKEND STREAM] Sent fallback chunk #{fallback_chunk_count}: '{token}'")
                         yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
-                print(f"[BACKEND STREAM] Fallback stream finished. Total chunks sent: {fallback_chunk_count}")
+                logger.debug(f"[BACKEND STREAM] Fallback stream finished. Total chunks sent: {fallback_chunk_count}")
             except Exception as fallback_e:
-                print(f"[BACKEND STREAM] Fallback model failed: {fallback_e}")
+                logger.error(f"[BACKEND STREAM] Fallback model failed: {fallback_e}")
                 yield f"data: {json.dumps({'type': 'token', 'token': 'Error: Failed to retrieve answer from local RAG engine.'})}\n\n"
                 return
 
@@ -374,6 +399,9 @@ Do not use external knowledge."""
         )
         db.add(assistant_message)
         db.commit()
+        
+        duration = time.time() - start_time
+        logger.info(f"Chat stream completed: session_id={session.id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider=Ollama, citations={len(sources)}")
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 logger.info("Initializing SentenceTransformer model 'BAAI/bge-small-en-v1.5'...")
 model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+logger.info("SentenceTransformer model 'BAAI/bge-small-en-v1.5' successfully loaded.")
 
 
 def generate_embedding(text: str) -> list[float]:

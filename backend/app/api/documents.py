@@ -2,6 +2,7 @@
 
 import os
 import uuid
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, BackgroundTasks
@@ -17,6 +18,7 @@ from app.schemas.document import DocumentResponse, DocumentListResponse, UploadR
 from app.services.document_processor.ingestion_service import ingest_document
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 ALLOWED_MIME_TYPES = {"application/pdf"}
 MAX_UPLOAD_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
@@ -48,6 +50,7 @@ async def upload_document(
     db: Session = Depends(get_db),
 ):
     """Upload a PDF document and trigger asynchronous text ingestion."""
+    logger.info(f"Document upload started: original_filename={file.filename}, user_id={current_user.id}")
     # 1. Resolve and validate directory paths to prevent traversal
     upload_dir = Path(settings.UPLOAD_DIR).resolve()
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -57,6 +60,7 @@ async def upload_document(
     file_path = (upload_dir / unique_filename).resolve()
 
     if not str(file_path).startswith(str(upload_dir)):
+        logger.error(f"Document upload failed: path traversal detected in original_filename={file.filename}, user_id={current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid destination path.",
@@ -66,8 +70,10 @@ async def upload_document(
     try:
         file_size = await stream_validate_and_save(file, str(file_path), MAX_UPLOAD_BYTES)
     except HTTPException as e:
+        logger.error(f"Document upload failed: validation error for original_filename={file.filename}, user_id={current_user.id}. Error: {e.detail}")
         raise e
-    except Exception:
+    except Exception as e:
+        logger.error(f"Document upload failed: saving file to disk error for original_filename={file.filename}, user_id={current_user.id}. Error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An error occurred while uploading the file.",
@@ -77,6 +83,7 @@ async def upload_document(
     try:
         validate_pdf_structure(str(file_path))
     except Exception as e:
+        logger.error(f"Document upload failed: PDF structural validation failed for original_filename={file.filename}, user_id={current_user.id}. Error: {str(e)}")
         if os.path.exists(file_path):
             try:
                 os.remove(file_path)
@@ -88,17 +95,31 @@ async def upload_document(
     sanitized_original_filename = sanitize_filename(file.filename)
 
     # 5. Store metadata in database (status="processing")
-    document = Document(
-        user_id=current_user.id,
-        filename=unique_filename,
-        original_filename=sanitized_original_filename,
-        file_size=file_size,
-        storage_path=str(file_path),
-        status="processing",
-    )
-    db.add(document)
-    db.commit()
-    db.refresh(document)
+    try:
+        document = Document(
+            user_id=current_user.id,
+            filename=unique_filename,
+            original_filename=sanitized_original_filename,
+            file_size=file_size,
+            storage_path=str(file_path),
+            status="processing",
+        )
+        db.add(document)
+        db.commit()
+        db.refresh(document)
+    except Exception as e:
+        logger.error(f"Document upload failed: database error for original_filename={file.filename}, user_id={current_user.id}. Error: {str(e)}")
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save document metadata."
+        )
+
+    logger.info(f"Document upload completed: document_id={document.id}, user_id={current_user.id}, storage_name={unique_filename}, file_size={file_size}")
 
     # Trigger document ingestion pipeline asynchronously
     background_tasks.add_task(ingest_document, db, document.id)
@@ -154,20 +175,31 @@ def delete_document(
         .first()
     )
     if not document:
+        logger.warning(f"Document deletion failed: document_id={document_id} not found or not owned by user_id={current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
 
     # Delete file from disk
+    storage_path = document.storage_path
     try:
-        if os.path.exists(document.storage_path):
-            os.remove(document.storage_path)
-    except OSError:
-        pass  # File may already be deleted
+        if os.path.exists(storage_path):
+            os.remove(storage_path)
+            logger.info(f"Deleted document file from disk: {storage_path}")
+    except OSError as e:
+        logger.error(f"Failed to delete document file from disk: {storage_path}. Error: {str(e)}")
 
     # Delete database record
-    db.delete(document)
-    db.commit()
+    try:
+        db.delete(document)
+        db.commit()
+        logger.info(f"Document deletion completed: document_id={document_id}, user_id={current_user.id}")
+    except Exception as e:
+        logger.error(f"Document deletion database failed: document_id={document_id}, user_id={current_user.id}. Error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete document from database."
+        )
 
     return {"message": "Document deleted successfully"}

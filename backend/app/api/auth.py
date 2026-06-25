@@ -1,6 +1,7 @@
 """Authentication API endpoints — register, login, me, logout."""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -10,6 +11,7 @@ from app.models.user import User
 from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GoogleLoginRequest
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _set_access_cookie(response: Response, access_token: str) -> None:
@@ -38,11 +40,14 @@ def _delete_access_cookie(response: Response) -> None:
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
+def register(data: RegisterRequest, request: Request, db: Session = Depends(get_db)):
     """Create a new user account."""
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"Registration attempt started: email={data.email}, ip={client_host}")
     # Check for duplicate email
     existing = db.query(User).filter(User.email == data.email).first()
     if existing:
+        logger.warning(f"Registration failed: email={data.email} already exists, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists",
@@ -56,19 +61,24 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info(f"Registration successful: user_id={user.id}, email={user.email}, ip={client_host}")
     return user
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(response: Response, data: LoginRequest, db: Session = Depends(get_db)):
+def login(response: Response, data: LoginRequest, request: Request, db: Session = Depends(get_db)):
     """Authenticate and return a JWT access token."""
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"Login attempt: email={data.email}, ip={client_host}")
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.hashed_password):
+        logger.warning(f"Login failed: email={data.email}, reason=invalid credentials, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
     if not user.is_active:
+        logger.warning(f"Login failed: email={data.email}, reason=account disabled, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is disabled",
@@ -76,6 +86,7 @@ def login(response: Response, data: LoginRequest, db: Session = Depends(get_db))
 
     access_token = create_access_token(data={"sub": user.id})
     _set_access_cookie(response, access_token)
+    logger.info(f"Login successful: user_id={user.id}, email={user.email}, method=credentials, ip={client_host}")
     return TokenResponse(access_token=access_token)
 
 
@@ -86,18 +97,34 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(response: Response, request: Request):
     """Logout — clear the access_token cookie."""
+    user_info = "anonymous"
+    try:
+        token = request.cookies.get("access_token")
+        if token:
+            from app.core.security import decode_token
+            payload = decode_token(token)
+            user_id = payload.get("sub")
+            if user_id:
+                user_info = f"user_id={user_id}"
+    except Exception:
+        pass
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"User logout: {user_info}, ip={client_host}")
     _delete_access_cookie(response)
     return {"message": "Logged out successfully"}
 
 
 @router.post("/google", response_model=TokenResponse)
-def google_login(response: Response, data: GoogleLoginRequest, db: Session = Depends(get_db)):
+def google_login(response: Response, data: GoogleLoginRequest, request: Request, db: Session = Depends(get_db)):
     """Authenticate via Google ID token."""
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"Google login attempt: ip={client_host}")
     try:
         payload = verify_google_token(data.id_token)
     except Exception as e:
+        logger.warning(f"Google login failed verification: reason={str(e)}, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Google authentication failed: {str(e)}"
@@ -108,6 +135,7 @@ def google_login(response: Response, data: GoogleLoginRequest, db: Session = Dep
     name = payload.get("name", "Google User")
 
     if not email:
+        logger.warning(f"Google login failed: missing email in token payload, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Google token does not contain an email address"
@@ -137,6 +165,7 @@ def google_login(response: Response, data: GoogleLoginRequest, db: Session = Dep
         db.refresh(user)
 
     if not user.is_active:
+        logger.warning(f"Google login failed: user account is disabled for email={email}, ip={client_host}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is disabled",
@@ -145,5 +174,6 @@ def google_login(response: Response, data: GoogleLoginRequest, db: Session = Dep
     # Issue DocuMind access token
     access_token = create_access_token(data={"sub": user.id})
     _set_access_cookie(response, access_token)
+    logger.info(f"Google login successful: user_id={user.id}, email={user.email}, google_sub={google_sub}, ip={client_host}")
     return TokenResponse(access_token=access_token)
 

@@ -67,29 +67,24 @@ def run_rag_pipeline(
         }
 
     # 1. Immediately before build_reasoning_prompt():
-    print("===== RETRIEVED CHUNKS =====")
-    for chunk in chunks:
-        print(chunk)
+    logger.debug(f"===== RETRIEVED CHUNKS =====\n{chunks}")
 
     # 2. Detect Intent, format context, build prompt, and track contributions
     intent = detect_reasoning_intent(question)
     context = format_document_context(chunks)
 
     # 2. Immediately after format_document_context():
-    print("===== FORMATTED CONTEXT =====")
-    print(context)
+    logger.debug(f"===== FORMATTED CONTEXT =====\n{context}")
 
     prompt = build_reasoning_prompt(intent, question, context)
 
     # 3. Immediately after build_reasoning_prompt():
-    print("===== FINAL PROMPT =====")
-    print(prompt)
+    logger.debug(f"===== FINAL PROMPT =====\n{prompt}")
 
     contributions = build_document_contributions(chunks)
 
     # 4. Immediately before answer_question():
-    print("===== PROMPT SENT TO LLM =====")
-    print(prompt)
+    logger.debug(f"===== PROMPT SENT TO LLM =====\n{prompt}")
 
     # 3. Generate answer using LLM
     answer = answer_question(

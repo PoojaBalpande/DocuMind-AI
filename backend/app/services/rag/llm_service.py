@@ -56,16 +56,13 @@ Do not use external knowledge."""
     }
 
     # Debug Log Request Details
-    logger.info(f"OLLAMA REQUEST DEBUG:")
-    logger.info(f"  Model Name: {payload['model']}")
-    logger.info(f"  Endpoint URL: {url}")
-    logger.info(f"  Request Payload: {payload}")
+    logger.debug(f"OLLAMA REQUEST DEBUG:")
+    logger.debug(f"  Model Name: {payload['model']}")
+    logger.debug(f"  Endpoint URL: {url}")
+    logger.debug(f"  Request Payload: {payload}")
 
-    print("===== SYSTEM PROMPT SENT =====")
-    print(system_prompt)
-
-    print("===== USER PROMPT SENT =====")
-    print(prompt)
+    logger.debug(f"===== SYSTEM PROMPT SENT =====\n{system_prompt}")
+    logger.debug(f"===== USER PROMPT SENT =====\n{prompt}")
 
     try:
         start_time = time.time()
@@ -73,10 +70,10 @@ Do not use external knowledge."""
         response = requests.post(url, json=payload, timeout=300)
         total_time = time.time() - start_time
         
-        logger.info(f"OLLAMA RESPONSE DEBUG:")
-        logger.info(f"  Status Code: {response.status_code}")
-        logger.info(f"  Raw Ollama Response: {response.text}")
-        logger.info(f"  Total Response Time: {total_time:.2f} seconds")
+        logger.debug(f"OLLAMA RESPONSE DEBUG:")
+        logger.debug(f"  Status Code: {response.status_code}")
+        logger.debug(f"  Raw Ollama Response: {response.text}")
+        logger.debug(f"  Total Response Time: {total_time:.2f} seconds")
         
         response.raise_for_status()
         return response.json()["message"]["content"].strip()
@@ -85,20 +82,20 @@ Do not use external knowledge."""
         
         # Try fallback model
         payload["model"] = "qwen2.5-coder:7b"
-        logger.info(f"OLLAMA FALLBACK REQUEST DEBUG:")
-        logger.info(f"  Model Name: {payload['model']}")
-        logger.info(f"  Endpoint URL: {url}")
-        logger.info(f"  Request Payload: {payload}")
+        logger.debug(f"OLLAMA FALLBACK REQUEST DEBUG:")
+        logger.debug(f"  Model Name: {payload['model']}")
+        logger.debug(f"  Endpoint URL: {url}")
+        logger.debug(f"  Request Payload: {payload}")
         
         try:
             start_time = time.time()
             response = requests.post(url, json=payload, timeout=300)
             total_time = time.time() - start_time
             
-            logger.info(f"OLLAMA FALLBACK RESPONSE DEBUG:")
-            logger.info(f"  Status Code: {response.status_code}")
-            logger.info(f"  Raw Ollama Response: {response.text}")
-            logger.info(f"  Total Response Time: {total_time:.2f} seconds")
+            logger.debug(f"OLLAMA FALLBACK RESPONSE DEBUG:")
+            logger.debug(f"  Status Code: {response.status_code}")
+            logger.debug(f"  Raw Ollama Response: {response.text}")
+            logger.debug(f"  Total Response Time: {total_time:.2f} seconds")
             
             response.raise_for_status()
             return response.json()["message"]["content"].strip()
