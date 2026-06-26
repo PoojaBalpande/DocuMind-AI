@@ -51,9 +51,9 @@ async def lifespan(app: FastAPI):
 
     # 3. Verify embedding model is loaded
     try:
-        from app.services.document_processor.embedding_service import model
-        if model is not None:
-            logger.info("Embedding Model: Loaded successfully (BAAI/bge-small-en-v1.5)")
+        logger.info(
+            "Embedding service initialized (model will load on first use)."
+        )
     except Exception as e:
         logger.error(f"Embedding Model: Failed to load. Error: {str(e)}")
 
