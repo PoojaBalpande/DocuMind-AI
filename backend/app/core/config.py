@@ -20,8 +20,15 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     GOOGLE_CLIENT_ID: str = ""
     ALGORITHM: str = "HS256"
+    LLM_PROVIDER: str = "ollama"
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     OLLAMA_MODEL: str = "qwen3:8b"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-specdec"
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
@@ -74,6 +81,23 @@ class Settings(BaseSettings):
                 f"Must be one of: {', '.join(VALID_SAMESITE_VALUES)}"
             )
 
+        # Validate LLM Provider configuration
+        valid_providers = {"ollama", "groq", "gemini", "claude"}
+        normalized_provider = self.LLM_PROVIDER.lower().strip()
+        if normalized_provider not in valid_providers:
+            errors.append(
+                f"LLM_PROVIDER='{self.LLM_PROVIDER}' is invalid. "
+                f"Must be one of: {', '.join(valid_providers)}"
+            )
+        else:
+            self.LLM_PROVIDER = normalized_provider
+            if normalized_provider == "groq" and (not self.GROQ_API_KEY or not self.GROQ_API_KEY.strip()):
+                errors.append("GROQ_API_KEY is required when LLM_PROVIDER is 'groq'.")
+            elif normalized_provider == "gemini" and (not self.GEMINI_API_KEY or not self.GEMINI_API_KEY.strip()):
+                errors.append("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'.")
+            elif normalized_provider == "claude" and (not self.ANTHROPIC_API_KEY or not self.ANTHROPIC_API_KEY.strip()):
+                errors.append("ANTHROPIC_API_KEY is required when LLM_PROVIDER is 'claude'.")
+
         # Production-specific checks
         if self.ENVIRONMENT == "production":
             if "*" in self.CORS_ORIGINS:
@@ -91,7 +115,7 @@ class Settings(BaseSettings):
                 )
 
         # Non-fatal warnings
-        if not self.OPENAI_API_KEY:
+        if not self.OPENAI_API_KEY and normalized_provider not in {"groq", "gemini", "claude"}:
             logger.warning(
                 "OPENAI_API_KEY is not set. OpenAI features will be unavailable. "
                 "Ollama will be used as the primary LLM provider."

@@ -161,14 +161,20 @@ Go to **Environment** tab and add:
 | `COOKIE_SECURE` | `True` | Required for HTTPS |
 | `COOKIE_SAMESITE` | `lax` | Required for cross-origin |
 | `UPLOAD_DIR` | `/data/uploads` | Must match persistent disk mount |
-| `OLLAMA_BASE_URL` | `http://your-ollama-host:11434` | See LLM note below |
-| `OLLAMA_MODEL` | `qwen3:8b` | Or your preferred model |
+| `LLM_PROVIDER` | `groq` (or `gemini` / `claude` / `ollama`) | The selected LLM provider. |
+| `GROQ_API_KEY` | *(your Groq api key)* | Required only if `LLM_PROVIDER=groq` |
+| `GEMINI_API_KEY` | *(your Gemini api key)* | Required only if `LLM_PROVIDER=gemini` |
+| `ANTHROPIC_API_KEY` | *(your Claude api key)* | Required only if `LLM_PROVIDER=claude` |
+| `OLLAMA_BASE_URL` | `http://your-ollama-host:11434` | Only used if `LLM_PROVIDER=ollama` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Default is fine |
 
-> **LLM Note**: Render does not natively support running Ollama. You need one of:
-> - A separate VM/VPS running Ollama with a public endpoint
-> - An OpenAI-compatible API provider (set `OPENAI_API_KEY` and modify `llm_service.py`)
-> - A GPU cloud service (e.g., RunPod, Lambda Labs) running Ollama
+> **LLM Deployment Guide**: The backend supports multiple LLM providers:
+> - **Ollama**: Great for local development or custom VM host setups.
+> - **Groq (Recommended for Production)**: Ultra-fast inference with Llama models. Requires `GROQ_API_KEY`.
+> - **Google Gemini (Recommended for Production)**: Highly accurate and responsive. Requires `GEMINI_API_KEY`.
+> - **Anthropic Claude**: Premium tier reasoning. Requires `ANTHROPIC_API_KEY`.
+>
+> Render's container environment is not suitable for running heavy local LLM models (like Ollama). For production deployment on Render, it is strongly recommended to set `LLM_PROVIDER=groq` or `LLM_PROVIDER=gemini` and configure the respective API key.
 
 ### Deploy
 
@@ -278,8 +284,15 @@ Use the **same Client ID** in both:
 | `COOKIE_DOMAIN` | ⚙️ | `""` | `""` (leave empty for Render→Vercel) |
 | `UPLOAD_DIR` | ⚙️ | `./uploads` | `/data/uploads` (persistent disk) |
 | `MAX_UPLOAD_SIZE_MB` | ⚙️ | `50` | `50` |
-| `OLLAMA_BASE_URL` | ⚙️ | `http://127.0.0.1:11434` | Your Ollama endpoint |
-| `OLLAMA_MODEL` | ⚙️ | `qwen3:8b` | Your model name |
+| `LLM_PROVIDER` | ✅ | `ollama` | One of: `ollama`, `groq`, `gemini`, `claude` |
+| `OLLAMA_BASE_URL` | ⚙️ | `http://127.0.0.1:11434` | Your Ollama base endpoint |
+| `OLLAMA_MODEL` | ⚙️ | `qwen3:8b` | Ollama model name |
+| `GROQ_API_KEY` | ⚙️ (req if groq) | `""` | Groq API Key |
+| `GROQ_MODEL` | ⚙️ | `llama-3.3-70b-specdec` | Groq model name |
+| `GEMINI_API_KEY` | ⚙️ (req if gemini) | `""` | Gemini API Key |
+| `GEMINI_MODEL` | ⚙️ | `gemini-1.5-flash` | Gemini model name |
+| `ANTHROPIC_API_KEY` | ⚙️ (req if claude) | `""` | Anthropic Claude API Key |
+| `ANTHROPIC_MODEL` | ⚙️ | `claude-3-5-sonnet-20241022` | Claude model name |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | ⚙️ | `30` | `30` |
 | `ALGORITHM` | ⚙️ | `HS256` | `HS256` |
 

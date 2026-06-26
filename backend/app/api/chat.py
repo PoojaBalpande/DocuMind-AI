@@ -19,6 +19,7 @@ from app.schemas.chat import (
     MessageResponse,
 )
 import logging
+from app.core.config import settings
 from app.services.rag.rag_pipeline import run_rag_pipeline
 
 router = APIRouter()
@@ -162,7 +163,7 @@ def ask_question(
 
     sources_count = len(result["sources"])
     duration = time.time() - start_time
-    logger.info(f"Chat query completed: session_id={data.session_id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider=Ollama, citations={sources_count}")
+    logger.info(f"Chat query completed: session_id={data.session_id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider={settings.LLM_PROVIDER}, citations={sources_count}")
 
     return ChatAskResponse(
         answer=result["answer"],
@@ -308,75 +309,29 @@ def ask_question_stream(
             logger.info(f"Chat stream completed (no chunks): session_id={session.id}, duration={duration:.3f}s, citations=0")
             return
 
-        # 5. Generate stream from Ollama
-        url = f"{settings.OLLAMA_BASE_URL}/api/chat"
-        system_prompt = """You are DocuMind AI.
-
-Answer only from the provided document context.
-
-If the user asks for a summary, comparison, or synthesis of the documents (e.g. similarities or differences):
-- Answer by synthesizing, comparing, or contrasting the facts and evidence present in the retrieved chunks.
-- You are allowed and encouraged to infer similarities and differences from the retrieved evidence, even if they are not stated verbatim in a single sentence.
-
-If the context does not contain enough information to address the question, or if you cannot answer the question or infer comparisons from the provided chunks, respond:
-"I could not find this information in the uploaded documents."
-
-Do not hallucinate.
-Do not use external knowledge."""
-
-        logger.debug(f"===== SYSTEM PROMPT SENT =====\n{system_prompt}")
-        logger.debug(f"===== USER PROMPT SENT =====\n{prompt}")
-
-        payload = {
-            "model": settings.OLLAMA_MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            "stream": True,
-            "options": {
-                "temperature": user_settings.temperature,
-                "num_predict": user_settings.max_tokens,
-            }
-        }
+        # 5. Generate stream from configured LLM provider
+        from app.services.rag.llm_service import stream_answer_question
 
         full_answer = ""
         chunk_count = 0
         try:
-            # Query Ollama model with stream=True
-            logger.info(f"Querying streaming Ollama model {settings.OLLAMA_MODEL}...")
-            response = requests.post(url, json=payload, stream=True, timeout=300)
-            response.raise_for_status()
-            for line in response.iter_lines(chunk_size=1):
-                if line:
-                    chunk_data = json.loads(line.decode("utf-8"))
-                    token = chunk_data.get("message", {}).get("content", "")
-                    full_answer += token
-                    chunk_count += 1
-                    logger.debug(f"[BACKEND STREAM] Sent chunk #{chunk_count}: '{token}'")
-                    yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
+            logger.info(f"Querying streaming {settings.LLM_PROVIDER} model...")
+            for token in stream_answer_question(
+                question=data.message,
+                context=context,
+                custom_prompt=prompt,
+                temperature=user_settings.temperature,
+                max_tokens=user_settings.max_tokens,
+            ):
+                full_answer += token
+                chunk_count += 1
+                logger.debug(f"[BACKEND STREAM] Sent chunk #{chunk_count}: '{token}'")
+                yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
             logger.debug(f"[BACKEND STREAM] Stream finished. Total chunks sent: {chunk_count}")
         except Exception as e:
-            logger.warning(f"[BACKEND STREAM] Primary model failed: {e}. Trying fallback model...")
-            # Try fallback model
-            payload["model"] = "qwen2.5-coder:7b"
-            fallback_chunk_count = 0
-            try:
-                response = requests.post(url, json=payload, stream=True, timeout=300)
-                response.raise_for_status()
-                for line in response.iter_lines(chunk_size=1):
-                    if line:
-                        chunk_data = json.loads(line.decode("utf-8"))
-                        token = chunk_data.get("message", {}).get("content", "")
-                        full_answer += token
-                        fallback_chunk_count += 1
-                        logger.debug(f"[BACKEND STREAM] Sent fallback chunk #{fallback_chunk_count}: '{token}'")
-                        yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
-                logger.debug(f"[BACKEND STREAM] Fallback stream finished. Total chunks sent: {fallback_chunk_count}")
-            except Exception as fallback_e:
-                logger.error(f"[BACKEND STREAM] Fallback model failed: {fallback_e}")
-                yield f"data: {json.dumps({'type': 'token', 'token': 'Error: Failed to retrieve answer from local RAG engine.'})}\n\n"
-                return
+            logger.error(f"[BACKEND STREAM] Streaming failed: {e}")
+            yield f"data: {json.dumps({'type': 'token', 'token': 'Error: Failed to retrieve answer from LLM engine.'})}\n\n"
+            return
 
         # 6. Store completed conversation in DB
         user_message = Message(
@@ -401,7 +356,7 @@ Do not use external knowledge."""
         db.commit()
         
         duration = time.time() - start_time
-        logger.info(f"Chat stream completed: session_id={session.id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider=Ollama, citations={len(sources)}")
+        logger.info(f"Chat stream completed: session_id={session.id}, user_id={current_user.id}, duration={duration:.3f}s, llm_provider={settings.LLM_PROVIDER}, citations={len(sources)}")
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
