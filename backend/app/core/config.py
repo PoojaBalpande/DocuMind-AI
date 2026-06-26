@@ -107,7 +107,10 @@ class Settings(BaseSettings):
                     "Set explicit origins instead."
                 )
             if not self.GOOGLE_CLIENT_ID or not self.GOOGLE_CLIENT_ID.strip():
-                errors.append("GOOGLE_CLIENT_ID is missing or empty in production mode.")
+                logger.warning(
+                    "GOOGLE_CLIENT_ID is not configured. "
+                    "Google Sign-In will be unavailable."
+                )
             if not self.COOKIE_SECURE:
                 logger.warning(
                     "COOKIE_SECURE=False in production mode. "
