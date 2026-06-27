@@ -24,6 +24,8 @@ async def lifespan(app: FastAPI):
     logger.info("==================================================")
     logger.info(f"Starting {settings.APP_NAME}...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"LLM Provider: {settings.LLM_PROVIDER}")
+    logger.info(f"Embedding Provider: {settings.EMBEDDING_PROVIDER}")
     
     # 1. Verify database connection
     db_connected = False

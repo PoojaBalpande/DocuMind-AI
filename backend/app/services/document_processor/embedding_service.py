@@ -1,34 +1,18 @@
-"""Local Hugging Face embedding service using sentence-transformers."""
+"""Thin wrapper service delegating to the configured embedding provider."""
 
-import logging
-from sentence_transformers import SentenceTransformer
+from app.services.document_processor.embedding import get_embedding_provider
 
-logger = logging.getLogger(__name__)
-
-_model = None
-
-
-def get_model():
-    global _model
-
-    if _model is None:
-        logger.info("Loading SentenceTransformer model...")
-        _model = SentenceTransformer("BAAI/bge-small-en-v1.5")
-        logger.info("SentenceTransformer model loaded.")
-
-    return _model
+# Kept for legacy backward compatibility with the health check diagnostic
+model = None
 
 
 def generate_embedding(text: str) -> list[float]:
-    model = get_model()
-    embedding = model.encode(text, normalize_embeddings=True)
-    return embedding.tolist()
+    """Generate normalized embedding for a single string using the configured provider."""
+    provider = get_embedding_provider()
+    return provider.generate_embedding(text)
 
 
 def generate_embeddings(texts: list[str]) -> list[list[float]]:
-    if not texts:
-        return []
-
-    model = get_model()
-    embeddings = model.encode(texts, normalize_embeddings=True)
-    return embeddings.tolist()
+    """Generate normalized embeddings for a list of strings using the configured provider."""
+    provider = get_embedding_provider()
+    return provider.generate_embeddings(texts)

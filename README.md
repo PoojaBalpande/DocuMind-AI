@@ -176,6 +176,52 @@ uvicorn app.main:app --reload --port 8001
 
 ---
 
+## Backend Installation
+
+### Production
+
+Production deployments should install only the lightweight production dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs the minimum dependencies required for production and is intended for:
+
+* Render
+* Docker
+* Cloud deployments
+* Production servers
+
+Production uses the configured embedding provider (for example Gemini via the `EMBEDDING_PROVIDER=gemini` setting). No local ML models or PyTorch are required.
+
+---
+
+### Local Development
+
+Local development should install the full development dependency set:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+This installs everything in `requirements.txt` plus:
+
+* Sentence Transformers
+* PyTorch
+* Local embedding dependencies
+
+This configuration is intended for:
+
+* Local development
+* Offline embedding generation
+* Experimentation
+* Testing
+
+When using local development dependencies, set `EMBEDDING_PROVIDER=local` in your `.env` file to use Sentence Transformers for embedding generation.
+
+---
+
 ## 3. Frontend Setup
 
 ```bash

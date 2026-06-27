@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
 
+    # Embeddings Configuration
+    EMBEDDING_PROVIDER: str = "local"
+    EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
+    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Cookie configuration
@@ -97,6 +102,19 @@ class Settings(BaseSettings):
                 errors.append("GEMINI_API_KEY is required when LLM_PROVIDER is 'gemini'.")
             elif normalized_provider == "claude" and (not self.ANTHROPIC_API_KEY or not self.ANTHROPIC_API_KEY.strip()):
                 errors.append("ANTHROPIC_API_KEY is required when LLM_PROVIDER is 'claude'.")
+
+        # Validate Embedding Provider configuration
+        valid_embeddings = {"local", "gemini"}
+        normalized_embed = self.EMBEDDING_PROVIDER.lower().strip()
+        if normalized_embed not in valid_embeddings:
+            errors.append(
+                f"EMBEDDING_PROVIDER='{self.EMBEDDING_PROVIDER}' is invalid. "
+                f"Must be one of: {', '.join(valid_embeddings)}"
+            )
+        else:
+            self.EMBEDDING_PROVIDER = normalized_embed
+            if normalized_embed == "gemini" and (not self.GEMINI_API_KEY or not self.GEMINI_API_KEY.strip()):
+                errors.append("GEMINI_API_KEY is required when EMBEDDING_PROVIDER is 'gemini'.")
 
         # Production-specific checks
         if self.ENVIRONMENT == "production":
