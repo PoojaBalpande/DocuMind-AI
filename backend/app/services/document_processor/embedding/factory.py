@@ -9,6 +9,10 @@ def get_embedding_provider() -> BaseEmbeddingProvider:
     if _provider_instance is not None:
         return _provider_instance
 
+    print("=" * 60)
+    print("EMBEDDING_PROVIDER =", settings.EMBEDDING_PROVIDER)
+    print("GEMINI_MODEL =", settings.GEMINI_EMBEDDING_MODEL)
+    print("=" * 60)
     provider = settings.EMBEDDING_PROVIDER.lower().strip()
     if provider == "local":
         from .local_provider import LocalEmbeddingProvider
