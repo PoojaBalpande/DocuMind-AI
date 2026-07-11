@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Guard: Verify the Google Generative AI SDK is installed.
 try:
+    # pyrefly: ignore [missing-import]
     import google.generativeai as genai
 except ImportError as e:
     raise RuntimeError(

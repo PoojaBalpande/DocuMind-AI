@@ -15,6 +15,13 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.api import auth, documents, chat, analytics, members
 from app.api import settings as settings_api
+import google.generativeai as genai
+import inspect
+
+print("=" * 60)
+print("google-generativeai version:", genai.__version__)
+print("embed_content signature:", inspect.signature(genai.embed_content))
+print("=" * 60)
 
 logger = logging.getLogger(__name__)
 
