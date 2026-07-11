@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Embeddings Configuration
     EMBEDDING_PROVIDER: str = "local"
     EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
-    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+    GEMINI_EMBEDDING_MODEL: str = "text-embedding-001"
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
