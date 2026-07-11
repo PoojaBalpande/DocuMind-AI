@@ -161,7 +161,7 @@ class GeminiEmbeddingProvider(BaseEmbeddingProvider):
         try:
             response = genai.embed_content(
                 model=model,
-                contents=text,
+                content=text,
             )
         except Exception as e:
             logger.error(f"Gemini embedding API call failed: {e}")
@@ -193,7 +193,7 @@ class GeminiEmbeddingProvider(BaseEmbeddingProvider):
         try:
             response = genai.embed_content(
                 model=model,
-                contents=texts,
+                content=texts,
             )
         except Exception as e:
             logger.error(f"Gemini embeddings API call failed: {e}")
