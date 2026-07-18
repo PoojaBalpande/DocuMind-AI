@@ -15,7 +15,7 @@ export function loginWithGooglePopup(clientId: string): Promise<string> {
 
     // Generate a random nonce for security
     const nonce = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-    const redirectUri = `${window.location.origin}/google-auth-callback`;
+    const redirectUri = `${window.location.origin}/auth-callback`;
     const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=id_token&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20email%20profile&nonce=${nonce}`;
 
     const popup = window.open(url, 'google-oauth-popup', `width=${width},height=${height},left=${left},top=${top}`);
